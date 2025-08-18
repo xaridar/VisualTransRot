@@ -1,0 +1,28 @@
+// Required comment line
+// Required comment line
+Max Temperature (K):  1000.0
+Moves per Point:  100000
+Points per Tooth:  1
+Points Added per Tooth:  0
+Number of Teeth:  1
+Temperature Decrease per Tooth:  0.01
+Max Translation Distance (Angstroms):  0.25
+Magwalk Translation Multiplication Factor:  10.0
+Magwalk Translation Probability:  0.1
+Max Rotation (Radians):  0.1
+Magwalk Rotation Probability:  0.1
+Length of Cubic Space:  5.0
+Max Failures During Propagation:  20
+Use Input.xyz (true/false):  false
+0K Finale (true/false):  false
+Static Temperature (true/false):  true
+Write Energies When Static Temperature (true/false):  false
+Write Configurational Heat Capacities (true/false):  false
+Number of Equilibration Configurations:  1000
+Write Acceptance Ratios (true/false):  false
+
+// Required comment line
+// Required comment line
+H2O  5
+Cl-  5
+NH4+  5
