@@ -1,5 +1,7 @@
 package process;
 
+import util.Globals;
+
 import javax.swing.*;
 import java.io.*;
 import java.util.*;
@@ -12,7 +14,8 @@ public class ProcessManager {
     public static final int FIRST_LINE_TIMEOUT = 3000;
     private final List<ProcessStruct> processes = new ArrayList<>();
 
-    File processInfoFile = new File("process_ids.properties");
+    File processInfoFile;
+
     public static Properties properties;
 
     public static File logDir;
@@ -26,7 +29,8 @@ public class ProcessManager {
     }
 
     private ProcessManager() {
-        logDir = new File("logs");
+        processInfoFile = new File(Globals.propertiesPath);
+        logDir = new File(Globals.logsPath);
         if (!logDir.exists()) {
             logDir.mkdir();
         }
@@ -118,7 +122,7 @@ public class ProcessManager {
 
             List<String> winArgs = new ArrayList<>(
                     List.of("powershell", "-Command",
-                            "Start-Process 'java' -ArgumentList '-jar','wrapper.jar','" + timestamp + "','java','-jar','Transrot.jar','" +
+                            "Start-Process 'java' -ArgumentList '-jar','" + Globals.wrapperPath + "','" + timestamp + "','java','-jar','" + Globals.jarPath + "','" +
                                      String.join("','", arguments) + "' -WindowStyle Hidden " +
                             "-RedirectStandardOutput '" + stdoutFile.getPath() + "' " +
                             "-RedirectStandardError '" + stderrFile.getPath() + "'")
@@ -127,7 +131,7 @@ public class ProcessManager {
 
             // Another thread is used to read the PID when written and save it
             Thread pidThread = new Thread(() -> {
-                File pidFile = new File("pids", timestamp + ".tmp");
+                File pidFile = new File(Globals.pidsPath, timestamp + ".tmp");
                 try {
                     while (!pidFile.exists()) Thread.sleep(50);
                     Scanner reader = new Scanner(pidFile);
@@ -150,8 +154,8 @@ public class ProcessManager {
         }
         else {
             /* Unix operation is much simpler. The 'setsid' command allows for the desired behavior out-of-the-box. */
-            List<String> unixArgs = new ArrayList<>(arguments);
-            unixArgs.addAll(0, List.of("setsid", "java", "-jar", "Transrot.jar"));
+            List<String> unixArgs = arguments.stream().map(arg -> arg.replaceAll("\"", "")).collect(Collectors.toList());
+            unixArgs.addAll(0, List.of("setsid", "java", "-jar", Globals.jarPath));
             long pid = new ProcessBuilder(unixArgs)
                     .redirectOutput(stdoutFile)
                     .redirectError(stderrFile).start().pid();
@@ -183,10 +187,10 @@ public class ProcessManager {
                     if (!m.find()) return;
                     String outDir = m.group("timestamp");
                     properties.setProperty(String.format("%d.directory", ps.getPid()), outDir);
+                    properties.setProperty(String.format("%d.timestamp", ps.getPid()), String.valueOf(timestamp));
+                    if (!name.equals("")) properties.setProperty(String.format("%d.name", ps.getPid()), name);
+                    saveProps();
                 } else System.err.println("Error: directory not found!");
-                properties.setProperty(String.format("%d.timestamp", ps.getPid()), String.valueOf(timestamp));
-                if (!name.equals("")) properties.setProperty(String.format("%d.name", ps.getPid()), name);
-                saveProps();
                 ps.retrieveFiles();
             } catch (Exception e) {
                 e.printStackTrace();

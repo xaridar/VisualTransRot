@@ -81,11 +81,13 @@ public class ProcessStruct {
         stderrFile = new File(ProcessManager.logDir, String.format("stderr_%d.log", timestamp));
 
         String directoryPath = ProcessManager.properties.getProperty(String.format("%d.directory", pid));
-        if (directoryPath != null) outputDir = new File(directoryPath);
+        if (directoryPath != null) {
+            outputDir = new File(directoryPath);
+            createReadThreads();
+            loadConfigMap();
+        }
         else status = ProcessStatus.INIT_ERROR;
 
-        createReadThreads();
-        loadConfigMap();
     }
 
     private void createReadThreads() {

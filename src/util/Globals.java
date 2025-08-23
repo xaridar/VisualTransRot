@@ -8,6 +8,11 @@ import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.io.File;
+import java.io.UnsupportedEncodingException;
+import java.net.URL;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.sql.Timestamp;
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -25,7 +30,6 @@ import javax.swing.border.Border;
 import javax.swing.plaf.metal.MetalButtonUI;
 
 import config.Constraint;
-import jdk.jfr.SettingControl;
 
 public class Globals {
 
@@ -152,7 +156,28 @@ public class Globals {
     public static List<SettingInfo> settings = new ArrayList<>();
     public static List<ElementInfo> elemWeights = new ArrayList<>();
 
+    public static String configPath;
+    public static String dbPath;
+    public static String propertiesPath;
+    public static String logsPath;
+    public static String pidsPath;
+    public static String wrapperPath;
+    public static String jarPath;
+
     static {
+        try {
+            URL url = Globals.class.getProtectionDomain().getCodeSource().getLocation();
+            configPath = new File(new File(URLDecoder.decode(url.getFile(), StandardCharsets.UTF_8.name())).getParent(), "saved_config.txt").getPath();
+            dbPath = new File(new File(URLDecoder.decode(url.getFile(), StandardCharsets.UTF_8.name())).getParent(), "saved_dbase.txt").getPath();
+            propertiesPath = new File(new File(URLDecoder.decode(url.getFile(), StandardCharsets.UTF_8.name())).getParent(), "process_ids.properties").getPath();
+            logsPath = new File(new File(URLDecoder.decode(url.getFile(), StandardCharsets.UTF_8.name())).getParent(), "logs").getPath();
+            pidsPath = new File(new File(URLDecoder.decode(url.getFile(), StandardCharsets.UTF_8.name())).getParent(), "pids").getPath();
+            wrapperPath = new File(new File(URLDecoder.decode(url.getFile(), StandardCharsets.UTF_8.name())).getParent(), "wrapper.jar").getPath();
+            jarPath = new File(new File(URLDecoder.decode(url.getFile(), StandardCharsets.UTF_8.name())).getParent(), "Transrot.jar").getPath();
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
+
         settings.add(new SettingInfo(
                 "Max Temperature (K)", new Constraint.FloatConstraint(0.0), 1
         ));

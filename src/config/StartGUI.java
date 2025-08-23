@@ -520,7 +520,7 @@ public class StartGUI extends JFrame {
 
             try {
                 List<String> arguments = new ArrayList<>(Arrays.asList(
-                        "-c", "saved_config.txt", "-d", "saved_dbase.txt", "-o", outputFilepath
+                        "-c", '"' + Globals.configPath + '"', "-d", '"' + Globals.dbPath + '"', "-o", outputFilepath
                 ));
                 int ptCount, numMols;
                 if ((boolean) settings.get("Use Input.xyz")) {
@@ -529,7 +529,7 @@ public class StartGUI extends JFrame {
                         return;
                     }
                     arguments.add("-i");
-                    arguments.add(inputFile);
+                    arguments.add('"' + inputFile + '"');
 
                     File f = new File(inputFile);
                     try (Scanner s = new Scanner(f)) {
@@ -550,7 +550,7 @@ public class StartGUI extends JFrame {
                     ptCount = selectedMols.entrySet().stream().filter(kv -> !kv.getKey().equals("") && kv.getValue() > 0).mapToInt(kv -> DatabaseGUI.getInstance().getMolecule(kv.getKey()).atoms.size() * kv.getValue()).sum();
                     numMols = selectedMols.values().stream().mapToInt(i -> i).sum();
                 }
-                saveSettings("saved_config.txt");
+                saveSettings(Globals.configPath);
 
                 // Start sim
                 ProcessManager.getInstance().runProcess(name, arguments);
@@ -804,7 +804,7 @@ public class StartGUI extends JFrame {
         menuBar.setBorderPainted(false);
         JMenu fileMenu = createMenuOption("File", KeyEvent.VK_F,
                 new MenuOption("Edit Database", e -> {
-                    DatabaseGUI.getInstance().loadFile("saved_dbase.txt", false, true);
+                    DatabaseGUI.getInstance().loadFile(Globals.dbPath, false, true);
                     DatabaseGUI.getInstance().setVisible(true);
                 }, KeyEvent.VK_D, 5),
                 new MenuOption("Load config.txt", e ->
@@ -841,7 +841,7 @@ public class StartGUI extends JFrame {
                         } catch (IOException ignored) {}
                     }
                 }, KeyEvent.VK_A),
-                new MenuOption("Save config", e -> saveSettings("saved_config.txt"), KeyEvent.VK_S),
+                new MenuOption("Save config", e -> saveSettings(Globals.configPath), KeyEvent.VK_S),
                 new MenuOption("Quit", e -> closeWindow(), KeyEvent.VK_Q)
         );
         menuBar.add(fileMenu);
@@ -952,7 +952,7 @@ public class StartGUI extends JFrame {
         contentPane.setBackground(Globals.bgColor);
         setContentPane(contentPane);
 
-        DatabaseGUI.getInstance().loadFile("saved_dbase.txt");
+        DatabaseGUI.getInstance().loadFile(Globals.dbPath);
         DatabaseGUI.getInstance().addSaveListener(() -> {
             for (JComboBox<String> cb : currMolDropdowns.keySet()) {
                 updateMolComboBox(cb);
@@ -986,7 +986,7 @@ public class StartGUI extends JFrame {
         contentPane.add(errorLabel);
 
         setVisible(true);
-        populateSettings("saved_config.txt");
+        populateSettings(Globals.configPath);
     }
 
     private void closeWindow() {
@@ -999,7 +999,7 @@ public class StartGUI extends JFrame {
                 null,
                 null);
         if (msg == JOptionPane.YES_OPTION) {
-            saveSettings("saved_config.txt");
+            saveSettings(Globals.configPath);
             System.exit(1);
         } else if (msg == JOptionPane.NO_OPTION) {
             System.exit(1);

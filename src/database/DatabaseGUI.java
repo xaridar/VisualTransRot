@@ -96,7 +96,7 @@ public class DatabaseGUI extends JFrame {
             panel.add(noMolPanel);
         });
         topPanel.add(clearBtn);
-        JButton saveBtn = Globals.createButton("Save Database", Globals.menuFont, 40, 18, 6, e -> saveDB("saved_dbase.txt"));
+        JButton saveBtn = Globals.createButton("Save Database", Globals.menuFont, 40, 18, 6, e -> saveDB(Globals.dbPath));
         topPanel.add(saveBtn);
 
         JButton saveAsBtn = Globals.createButton("Save Database As...", Globals.menuFont, 40, 18, 6, e -> {
@@ -118,6 +118,7 @@ public class DatabaseGUI extends JFrame {
                 }
             }
         });
+        topPanel.add(saveAsBtn);
 
         errorLabel = new JLabel("", SwingConstants.CENTER);
         errorLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
@@ -206,7 +207,7 @@ public class DatabaseGUI extends JFrame {
                 null,
                 null);
         if (msg == JOptionPane.YES_OPTION) {
-            saveDB("saved_dbase.txt");
+            saveDB(Globals.dbPath);
         }
         dispose();
     }

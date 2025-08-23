@@ -175,24 +175,28 @@ public class ProcessSubframe extends JFrame {
         });
         infoPanel.add(molPanel);
 
-        JLabel restartLink = new JLabel("<html><u>Load config with values</u></html>");
-        restartLink.setForeground(Globals.linkColor);
-        restartLink.setFont(Globals.settingsFontNoBold);
-        restartLink.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        restartLink.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                StartGUI.getInstance().populateSettings(ps.getConfigMap(), ps.getMolCounts());
-            }
-        });
-        infoPanel.add(restartLink);
+        if (ps.getOutputDir() != null && ps.getOutputDir().exists()) {
+            JLabel restartLink = new JLabel("<html><u>Load config with values</u></html>");
+            restartLink.setForeground(Globals.linkColor);
+            restartLink.setFont(Globals.settingsFontNoBold);
+            restartLink.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+            restartLink.addMouseListener(new MouseAdapter() {
+                @Override
+                public void mouseClicked(MouseEvent e) {
+                    StartGUI.getInstance().populateSettings(ps.getConfigMap(), ps.getMolCounts());
+                }
+            });
+            infoPanel.add(restartLink);
+        }
 
         JScrollPane sp = new JScrollPane(infoPanel, JScrollPane.VERTICAL_SCROLLBAR_NEVER, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         sp.setBorder(null);
 
         tabbedPane.addTab("Process info", sp);
 
-        addPanel(ps.getConfigMapStr().entrySet().stream().map(kv -> kv.getKey() + ": " + kv.getValue()).collect(Collectors.toList()), "Config");
+        List<String> configMap = ps.getConfigMapStr().entrySet().stream().map(kv -> kv.getKey() + ": " + kv.getValue()).collect(Collectors.toList());
+        if (configMap.size() > 0) addPanel(configMap, "Config");
+        else addPanel(Collections.singletonList("No Output Directory Found"), "Config");
         JPanel outputPanel = addPanel(ps.getOutputLog(), "Output Log");
         JPanel errorPanel = addPanel(ps.getErrorLog(), "Error Log");
 
@@ -224,45 +228,52 @@ public class ProcessSubframe extends JFrame {
             JScrollPane outpSP = new JScrollPane(outpPanel, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
             outpSP.getVerticalScrollBar().setUnitIncrement(16);
             outpSP.setBorder(null);
-            for (File file : Objects.requireNonNull(ps.getOutputDir().listFiles())) {
-                JPanel filePanel = new JPanel(new BorderLayout());
-                filePanel.setOpaque(false);
-                filePanel.setBorder(null);
-                JLabel label = new JLabel("<html><u>" + file.getName() + "</u></html>");
-                label.setForeground(Globals.linkColor);
-                label.setFont(Globals.settingsFontNoBold);
-                label.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-                label.setFocusable(true);
-                label.setMaximumSize(label.getPreferredSize());
-                label.addMouseListener(new MouseAdapter() {
-                    @Override
-                    public void mouseReleased(MouseEvent e) {
-                        try {
-                            if (Desktop.isDesktopSupported()) {
-                                Desktop.getDesktop().open(file);
+            if (ps.getOutputDir() != null && ps.getOutputDir().exists()) {
+                for (File file : Objects.requireNonNull(ps.getOutputDir().listFiles())) {
+                    JPanel filePanel = new JPanel(new BorderLayout());
+                    filePanel.setOpaque(false);
+                    filePanel.setBorder(null);
+                    JLabel label = new JLabel("<html><u>" + file.getName() + "</u></html>");
+                    label.setForeground(Globals.linkColor);
+                    label.setFont(Globals.settingsFontNoBold);
+                    label.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+                    label.setFocusable(true);
+                    label.setMaximumSize(label.getPreferredSize());
+                    label.addMouseListener(new MouseAdapter() {
+                        @Override
+                        public void mouseReleased(MouseEvent e) {
+                            try {
+                                if (Desktop.isDesktopSupported()) {
+                                    Desktop.getDesktop().open(file);
+                                }
+                            } catch (IOException ioException) {
+                                ioException.printStackTrace();
                             }
-                        } catch (IOException ioException) {
-                            ioException.printStackTrace();
-                        }
-                    }
-                });
-                filePanel.add(label, BorderLayout.WEST);
-
-                if (file.getName().endsWith(".xyz") && !file.getName().endsWith("Movie.xyz")) {
-                    JButton popBtn = new JButton("Use as Input.xyz");
-                    popBtn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-                    popBtn.addActionListener(e -> {
-                        try {
-                            StartGUI.getInstance().createInput(file);
-                        } catch (IOException ioException) {
-                            ioException.printStackTrace();
                         }
                     });
-                    filePanel.add(popBtn, BorderLayout.EAST);
-                }
-                filePanel.setMaximumSize(new Dimension(filePanel.getMaximumSize().width, filePanel.getPreferredSize().height));
+                    filePanel.add(label, BorderLayout.WEST);
 
-                outpPanel.add(filePanel);
+                    if (file.getName().endsWith(".xyz") && !file.getName().endsWith("Movie.xyz")) {
+                        JButton popBtn = new JButton("Use as Input.xyz");
+                        popBtn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+                        popBtn.addActionListener(e -> {
+                            try {
+                                StartGUI.getInstance().createInput(file);
+                            } catch (IOException ioException) {
+                                ioException.printStackTrace();
+                            }
+                        });
+                        filePanel.add(popBtn, BorderLayout.EAST);
+                    }
+                    filePanel.setMaximumSize(new Dimension(filePanel.getMaximumSize().width, filePanel.getPreferredSize().height));
+
+                    outpPanel.add(filePanel);
+                }
+            } else {
+                JLabel notFoundLabel = new JLabel("No Output Directory Found");
+                notFoundLabel.setForeground(Globals.textColor);
+                notFoundLabel.setFont(Globals.settingsFontNoBold);
+                outpPanel.add(notFoundLabel);
             }
             tabbedPane.addTab("Output", outpSP);
         });
@@ -343,7 +354,7 @@ public class ProcessSubframe extends JFrame {
         statusLabel.setText(ps.getStatus().toString());
         etLabel.setText(ps.getExecTime());
 
-        if (ps.getOutputDir() != null && !dirShown) {
+        if (ps.getOutputDir() != null && !dirShown && ps.getOutputDir().exists()) {
             dirShown = true;
             dirLabel.setText("<html><u>" + ps.getOutputDir().getAbsolutePath() + "</u></html>");
         }
