@@ -395,7 +395,7 @@ public class StartGUI extends JFrame {
                         }
                     });
 
-                    String inputPath = Globals.pref.get("INPUT_PATH", ".");
+                    String inputPath = Globals.pref.get("INPUT_PATH", Globals.parentPath);
                     JFileChooser fileChooser = new JFileChooser(inputPath);
                     fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
                     fileChooser.setFileFilter(new FileNameExtensionFilter(".xyz input files", "xyz"));
@@ -507,6 +507,7 @@ public class StartGUI extends JFrame {
         // Start Button
         JButton startBtn = Globals.createButton("Start Simulation", Globals.btnFont, 40, 25, 8, e -> {
             String name = nameField.getText();
+            setError("");
             if (name.length() > 0 && ProcessManager.getInstance().nameExists(name)) {
                 setError("Name is not unique.");
                 return;
@@ -535,9 +536,9 @@ public class StartGUI extends JFrame {
                     try (Scanner s = new Scanner(f)) {
                         String line = s.nextLine();
                         ptCount = Integer.parseInt(line.trim());
-                        String line2 = s.nextLine();
+                        String line2 = s.nextLine().replaceFirst("Energy: -?\\d*.?\\d* Kcal/mole", "");
                         if (!line2.trim().matches("^(\\d *.*?)( | \\d *.*?)*$")) throw new NumberFormatException();
-                        numMols = line2.trim().split(" ").length;
+                        numMols = line2.trim().split(" ").length; // TODO: wrong
                     } catch (NumberFormatException | FileNotFoundException exc) {
                         setError("Invalid input file!");
                         return;
@@ -809,7 +810,7 @@ public class StartGUI extends JFrame {
                 }, KeyEvent.VK_D, 5),
                 new MenuOption("Load config.txt", e ->
                 {
-                    String configPath = Globals.pref.get("CONFIG_PATH", ".");
+                    String configPath = Globals.pref.get("CONFIG_PATH", Globals.parentPath);
                     JFileChooser configChooser = new JFileChooser(configPath);
                     configChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
                     configChooser.setFileFilter(new FileNameExtensionFilter(".txt input files", "txt"));
@@ -824,7 +825,7 @@ public class StartGUI extends JFrame {
                 }, KeyEvent.VK_L),
                 new MenuOption("Save config as...", e ->
                 {
-                    String saveAsPath = Globals.pref.get("SAVE_AS_PATH", ".");
+                    String saveAsPath = Globals.pref.get("SAVE_AS_PATH", Globals.parentPath);
                     JFileChooser fc = new JFileChooser(saveAsPath);
                     fc.setFileSelectionMode(JFileChooser.FILES_ONLY);
                     fc.setFileFilter(new FileNameExtensionFilter(".txt files", "txt"));
@@ -848,7 +849,7 @@ public class StartGUI extends JFrame {
         JMenu optionsMenu = createMenuOption("Options", KeyEvent.VK_O,
                 new MenuOption("Set Output DirectorY", e ->
                 {
-                    String outputPath = Globals.pref.get("OUTPUT_PATH", ".");
+                    String outputPath = Globals.pref.get("OUTPUT_PATH", Globals.parentPath);
                     JFileChooser outputChooser = new JFileChooser(outputPath);
                     outputChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
                     outputChooser.setDialogTitle("Choose an output directory for runs of TransRot");
@@ -861,7 +862,7 @@ public class StartGUI extends JFrame {
                 }, KeyEvent.VK_Y),
                 new MenuOption("ShoW Output Directory", e -> {
                     try {
-                        String outputPath = Globals.pref.get("OUTPUT_PATH", ".");
+                        String outputPath = Globals.pref.get("OUTPUT_PATH", Globals.parentPath);
                         if (Desktop.isDesktopSupported()) {
                             Desktop.getDesktop().open(new File(outputPath));
                         }
@@ -965,14 +966,14 @@ public class StartGUI extends JFrame {
         });
 
         // if any paths are outdated, delete them to go back to defaults
-        if (!new File(Globals.pref.get("OUTPUT_PATH", ".")).exists()) Globals.pref.remove("OUTPUT_PATH");
-        if (!new File(Globals.pref.get("SAVE_AS_PATH", ".")).exists()) Globals.pref.remove("SAVE_AS_PATH");
-        if (!new File(Globals.pref.get("SAVE_AS_DB_PATH", ".")).exists()) Globals.pref.remove("SAVE_AS_DB_PATH");
-        if (!new File(Globals.pref.get("CONFIG_PATH", ".")).exists()) Globals.pref.remove("CONFIG_PATH");
-        if (!new File(Globals.pref.get("INPUT_PATH", ".")).exists()) Globals.pref.remove("INPUT_PATH");
-        if (!new File(Globals.pref.get("DB_PATH", ".")).exists()) Globals.pref.remove("DB_PATH");
+        if (!new File(Globals.pref.get("OUTPUT_PATH", Globals.parentPath)).exists()) Globals.pref.remove("OUTPUT_PATH");
+        if (!new File(Globals.pref.get("SAVE_AS_PATH", Globals.parentPath)).exists()) Globals.pref.remove("SAVE_AS_PATH");
+        if (!new File(Globals.pref.get("SAVE_AS_DB_PATH", Globals.parentPath)).exists()) Globals.pref.remove("SAVE_AS_DB_PATH");
+        if (!new File(Globals.pref.get("CONFIG_PATH", Globals.parentPath)).exists()) Globals.pref.remove("CONFIG_PATH");
+        if (!new File(Globals.pref.get("INPUT_PATH", Globals.parentPath)).exists()) Globals.pref.remove("INPUT_PATH");
+        if (!new File(Globals.pref.get("DB_PATH", Globals.parentPath)).exists()) Globals.pref.remove("DB_PATH");
 
-        outputFilepath = Globals.pref.get("OUTPUT_PATH", ".");
+        outputFilepath = Globals.pref.get("OUTPUT_PATH", Globals.parentPath);
 
         addMenu();
         drawTitle();
@@ -1137,27 +1138,9 @@ public class StartGUI extends JFrame {
     public void createInput(File file) throws IOException {
         if (!file.getName().endsWith(".xyz")) return;
 
-        File newFile = new File("Input.xyz");
-        newFile.createNewFile();
-        StringBuilder contents = new StringBuilder();
-        try (Scanner s = new Scanner(file)) {
-            int lineNum = 0;
-            while (s.hasNextLine()) {
-                if (lineNum != 1) contents.append(s.nextLine()).append("\n");
-                else {
-                    String line = s.nextLine();
-                    String mols = line.split(" {2,}")[line.split(" {2,}").length - 1];
-                    contents.append(mols).append("\n");
-                }
-                lineNum++;
-            }
-        }
-        try (FileWriter writer = new FileWriter(newFile, false)) {
-            writer.write(contents.toString());
-        }
         if (!((boolean) settings.get("Use Input.xyz"))) checks.get("Use Input.xyz").doClick();
-        fileName.setText("Input.xyz");
+        fileName.setText(file.getName());
         fileName.setVisible(true);
-        inputFile = "./Input.xyz";
+        inputFile = file.getAbsolutePath();
     }
 }

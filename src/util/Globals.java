@@ -156,6 +156,8 @@ public class Globals {
     public static List<SettingInfo> settings = new ArrayList<>();
     public static List<ElementInfo> elemWeights = new ArrayList<>();
 
+    public static String parentPath;
+
     public static String configPath;
     public static String dbPath;
     public static String propertiesPath;
@@ -167,13 +169,14 @@ public class Globals {
     static {
         try {
             URL url = Globals.class.getProtectionDomain().getCodeSource().getLocation();
-            configPath = new File(new File(URLDecoder.decode(url.getFile(), StandardCharsets.UTF_8.name())).getParent(), "saved_config.txt").getPath();
-            dbPath = new File(new File(URLDecoder.decode(url.getFile(), StandardCharsets.UTF_8.name())).getParent(), "saved_dbase.txt").getPath();
-            propertiesPath = new File(new File(URLDecoder.decode(url.getFile(), StandardCharsets.UTF_8.name())).getParent(), "process_ids.properties").getPath();
-            logsPath = new File(new File(URLDecoder.decode(url.getFile(), StandardCharsets.UTF_8.name())).getParent(), "logs").getPath();
-            pidsPath = new File(new File(URLDecoder.decode(url.getFile(), StandardCharsets.UTF_8.name())).getParent(), "pids").getPath();
-            wrapperPath = new File(new File(URLDecoder.decode(url.getFile(), StandardCharsets.UTF_8.name())).getParent(), "wrapper.jar").getPath();
-            jarPath = new File(new File(URLDecoder.decode(url.getFile(), StandardCharsets.UTF_8.name())).getParent(), "Transrot.jar").getPath();
+            parentPath = new File(URLDecoder.decode(url.getFile(), StandardCharsets.UTF_8.name())).getParent();
+            configPath = new File(parentPath, "saved_config.txt").getPath();
+            dbPath = new File(parentPath, "saved_dbase.txt").getPath();
+            propertiesPath = new File(parentPath, "process_ids.properties").getPath();
+            logsPath = new File(parentPath, "logs").getPath();
+            pidsPath = new File(parentPath, "pids").getPath();
+            wrapperPath = new File(parentPath, "wrapper.jar").getPath();
+            jarPath = new File(parentPath, "Transrot.jar").getPath();
         } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
         }

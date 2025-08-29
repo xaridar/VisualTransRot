@@ -73,7 +73,7 @@ public class DatabaseGUI extends JFrame {
         topPanel.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0));
 
         JButton loadBtn = Globals.createButton("Load Database", Globals.menuFont, 40, 18, 6, e -> {
-            String databasePath = Globals.pref.get("DB_PATH", ".");
+            String databasePath = Globals.pref.get("DB_PATH", Globals.parentPath);
             JFileChooser databaseChooser = new JFileChooser(databasePath);
             databaseChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
             databaseChooser.setFileFilter(new FileNameExtensionFilter(".txt input files", "txt"));
@@ -100,7 +100,7 @@ public class DatabaseGUI extends JFrame {
         topPanel.add(saveBtn);
 
         JButton saveAsBtn = Globals.createButton("Save Database As...", Globals.menuFont, 40, 18, 6, e -> {
-            String saveAsPath = Globals.pref.get("SAVE_AS_DB_PATH", ".");
+            String saveAsPath = Globals.pref.get("SAVE_AS_DB_PATH", Globals.parentPath);
             JFileChooser fc = new JFileChooser(saveAsPath);
             fc.setFileSelectionMode(JFileChooser.FILES_ONLY);
             fc.setFileFilter(new FileNameExtensionFilter(".txt files", "txt"));

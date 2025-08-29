@@ -87,7 +87,6 @@ public class ProcessStruct {
             loadConfigMap();
         }
         else status = ProcessStatus.INIT_ERROR;
-
     }
 
     private void createReadThreads() {
