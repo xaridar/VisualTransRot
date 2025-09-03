@@ -90,7 +90,7 @@ public class ProcessManager {
                 if (parts.length >= 2) {
                     try {
                         long listedPid = Long.parseLong(parts[0]);
-                        if (parts[1].contains("Transrot.jar")) {
+                        if (parts[1].contains("TransRot.jar")) {
                             validPIDs.add(listedPid);
                         }
                     } catch (NumberFormatException ignored) {}

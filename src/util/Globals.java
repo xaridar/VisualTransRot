@@ -176,7 +176,7 @@ public class Globals {
             logsPath = new File(parentPath, "logs").getPath();
             pidsPath = new File(parentPath, "pids").getPath();
             wrapperPath = new File(parentPath, "wrapper.jar").getPath();
-            jarPath = new File(parentPath, "Transrot.jar").getPath();
+            jarPath = new File(parentPath, "TransRot.jar").getPath();
         } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
         }

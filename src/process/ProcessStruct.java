@@ -47,7 +47,7 @@ public class ProcessStruct {
         this.pid = pid;
         Optional<ProcessHandle> optHandle = ProcessHandle.of(pid);
 
-        // Only creates a local handle for a process if it is running Transrot.jar
+        // Only creates a local handle for a process if it is running TransRot.jar
         if (optHandle.isEmpty() || !(transrotPIDs == null || transrotPIDs.contains(pid))) {
             this.handle = null;
             status = ProcessStatus.FINISHED;
