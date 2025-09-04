@@ -276,8 +276,10 @@ public class ProcessStruct {
     }
 
     public void removeFiles() {
-        stdoutFile.delete();
-        stderrFile.delete();
+        try {
+            stdoutFile.delete();
+            stderrFile.delete();
+        } catch (NullPointerException ignored) {}
     }
 
     public long getPid() {

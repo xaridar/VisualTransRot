@@ -823,7 +823,7 @@ public class StartGUI extends JFrame {
                         populateSettings(configChooser.getSelectedFile().getAbsolutePath());
                     }
                 }, KeyEvent.VK_L),
-                new MenuOption("Save config as...", e ->
+                new MenuOption("SAve config as...", e ->
                 {
                     String saveAsPath = Globals.pref.get("SAVE_AS_PATH", Globals.parentPath);
                     JFileChooser fc = new JFileChooser(saveAsPath);
@@ -847,7 +847,7 @@ public class StartGUI extends JFrame {
         );
         menuBar.add(fileMenu);
         JMenu optionsMenu = createMenuOption("Options", KeyEvent.VK_O,
-                new MenuOption("Set Output DirectorY", e ->
+                new MenuOption("Set output directorY", e ->
                 {
                     String outputPath = Globals.pref.get("OUTPUT_PATH", Globals.parentPath);
                     JFileChooser outputChooser = new JFileChooser(outputPath);
@@ -860,7 +860,7 @@ public class StartGUI extends JFrame {
                         outputFilepath = outputChooser.getSelectedFile().getAbsolutePath();
                     }
                 }, KeyEvent.VK_Y),
-                new MenuOption("ShoW Output Directory", e -> {
+                new MenuOption("ShoW output directory", e -> {
                     try {
                         String outputPath = Globals.pref.get("OUTPUT_PATH", Globals.parentPath);
                         if (Desktop.isDesktopSupported()) {

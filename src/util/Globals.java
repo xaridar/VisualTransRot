@@ -128,18 +128,6 @@ public class Globals {
     public static Font settingsFontNoBold = new Font(Font.MONOSPACED, Font.PLAIN, 12);
     public static Font iconFont;
 
-//    public static Color bgColor = new Color(168, 62, 50);
-//    public static Color bgColorDark = new Color(137, 51, 41);
-//    public static Color menuBgColor = new Color(112, 28, 18);
-//    public static Color menuBgColorLight = new Color(242, 115, 99);
-//    public static Color textColor = new Color(255, 189, 181);
-//    public static Color accentColor = new Color(82, 54, 59);
-//    public static Color accentColorLight = new Color(184, 154, 159);
-//    public static Color accentColorDark = new Color(48, 39, 41);
-//    public static Color linkColor = new Color(15, 36, 117);
-//    public static Color linkColorAlt = new Color(109, 132, 223);
-//    public static Color errorColor = new Color(117, 0, 0);
-
     public static Color bgColor = new Color(230, 246, 255);
     public static Color bgColorDark = Color.LIGHT_GRAY;
     public static Color menuBgColor = Color.LIGHT_GRAY;
@@ -197,7 +185,7 @@ public class Globals {
                 "Number of Teeth", new Constraint.IntConstraint(0), 1, "!Static Temperature"
             ));
         settings.add(new SettingInfo(
-                "Temperature Decrease per Tooth", new Constraint.FloatConstraint(0.0, .999), 1, "!Static Temperature"
+                "Temperature Decrease per Tooth", new Constraint.FloatConstraint(0.0, .99999), 1, "!Static Temperature"
             ));
         settings.add(new SettingInfo(
                 "Max Translation Distance (Angstroms)", new Constraint.FloatConstraint(0.0), 2
@@ -215,7 +203,7 @@ public class Globals {
                 "Magwalk Rotation Probability", new Constraint.FloatConstraint(0.0, 1.0), 2
             ));
         settings.add(new SettingInfo(
-                "Length of Cubic Space", new Constraint.FloatConstraint(.001), 1
+                "Length of Cubic Space", new Constraint.FloatConstraint(.00001), 1
             ));
         settings.add(new SettingInfo(
                 "Max Failures During Propagation", new Constraint.IntConstraint(1), 2
