@@ -192,7 +192,7 @@ public class ProcessSubframe extends JFrame {
         JScrollPane sp = new JScrollPane(infoPanel, JScrollPane.VERTICAL_SCROLLBAR_NEVER, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         sp.setBorder(null);
 
-        tabbedPane.addTab("Process info", sp);
+        tabbedPane.addTab("Process Info", sp);
 
         List<String> configMap = ps.getConfigMapStr().entrySet().stream().map(kv -> kv.getKey() + ": " + kv.getValue()).collect(Collectors.toList());
         if (configMap.size() > 0) addPanel(configMap, "Config");

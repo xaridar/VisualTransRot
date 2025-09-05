@@ -77,7 +77,7 @@ public class Molecule {
                 double x, y, z, a, b, c, d, q, mass;
 
                 if (massless)
-                    atomName = atomName.chars().filter(ch -> ch != '*').toString();
+                    atomName = atomName.replaceAll("\\*", "");
                 else if (!Globals.hasElement(atomName)) {
                     System.err.println("All atom names must be valid elemental symbols or contain * (to designate a massless element).");
                     continue;

@@ -145,7 +145,7 @@ public class ProcessManager {
                     // add pid to properties
                     properties.setProperty("pids", processes.stream().map(ProcessStruct::getPid).map(p -> Long.toString(p)).collect(Collectors.joining(",")));
                     saveProps();
-                    createOutputThread(name, ps, stdoutFile, timestamp);
+                    createOutputThread(name, ps, stdoutFile, stderrFile, timestamp);
                 } catch (InterruptedException | IOException e) {
                     e.printStackTrace();
                 }
@@ -155,7 +155,7 @@ public class ProcessManager {
         else {
             /* Unix operation is much simpler. The 'setsid' command allows for the desired behavior out-of-the-box. */
             List<String> unixArgs = arguments.stream().map(arg -> arg.replaceAll("\"", "")).collect(Collectors.toList());
-            unixArgs.addAll(0, List.of("setsid", "java", "-jar", Globals.jarPath));
+            unixArgs.addAll(0, List.of("nohup", "java", "-jar", Globals.jarPath));
             long pid = new ProcessBuilder(unixArgs)
                     .redirectOutput(stdoutFile)
                     .redirectError(stderrFile).start().pid();
@@ -165,13 +165,13 @@ public class ProcessManager {
             // add pid to properties
             properties.setProperty("pids", processes.stream().map(ProcessStruct::getPid).map(p -> Long.toString(p)).collect(Collectors.joining(",")));
             saveProps();
-            createOutputThread(name, ps, stdoutFile, timestamp);
+            createOutputThread(name, ps, stdoutFile, stderrFile, timestamp);
         }
 
         ProcessGUI.getInstance().updateGUI();
     }
 
-    private void createOutputThread(String name, ProcessStruct ps, File stdoutFile, long timestamp) {
+    private void createOutputThread(String name, ProcessStruct ps, File stdoutFile, File stderrFile, long timestamp) {
         // Reader thread gets first output line to determine output folder
         Thread t = new Thread(() -> {
             try {
@@ -180,6 +180,7 @@ public class ProcessManager {
 
                 // If nothing is output, the process likely errored out
                 boolean immediateError = firstLine == null;
+                properties.setProperty(String.format("%d.timestamp", ps.getPid()), String.valueOf(timestamp));
 
                 if (!immediateError) {
                     Pattern datetimePattern = Pattern.compile("Writing output to: (?<timestamp>[^\\s]+)");
@@ -187,7 +188,6 @@ public class ProcessManager {
                     if (!m.find()) return;
                     String outDir = m.group("timestamp");
                     properties.setProperty(String.format("%d.directory", ps.getPid()), outDir);
-                    properties.setProperty(String.format("%d.timestamp", ps.getPid()), String.valueOf(timestamp));
                     if (!name.equals("")) properties.setProperty(String.format("%d.name", ps.getPid()), name);
                     saveProps();
                 } else System.err.println("Error: directory not found!");

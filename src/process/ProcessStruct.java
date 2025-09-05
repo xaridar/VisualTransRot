@@ -72,21 +72,25 @@ public class ProcessStruct {
 
     public void retrieveFiles() {
         // Pulls file information from the Properties object and starts threads to loads logs and config
-        timestamp = Long.parseLong(ProcessManager.properties.getProperty(String.format("%d.timestamp", pid)));
-        String newName = ProcessManager.properties.getProperty(String.format("%d.name", pid));
-        if (newName != null) name = newName;
-        else name = String.format("Process %d", pid);
+        try {
+            timestamp = Long.parseLong(ProcessManager.properties.getProperty(String.format("%d.timestamp", pid)));
+            String newName = ProcessManager.properties.getProperty(String.format("%d.name", pid));
+            if (newName != null) name = newName;
+            else name = String.format("Process %d", pid);
 
-        stdoutFile = new File(ProcessManager.logDir, String.format("stdout_%d.log", timestamp));
-        stderrFile = new File(ProcessManager.logDir, String.format("stderr_%d.log", timestamp));
+            stdoutFile = new File(ProcessManager.logDir, String.format("stdout_%d.log", timestamp));
+            stderrFile = new File(ProcessManager.logDir, String.format("stderr_%d.log", timestamp));
 
-        String directoryPath = ProcessManager.properties.getProperty(String.format("%d.directory", pid));
-        if (directoryPath != null) {
-            outputDir = new File(directoryPath);
-            createReadThreads();
-            loadConfigMap();
+            String directoryPath = ProcessManager.properties.getProperty(String.format("%d.directory", pid));
+            if (directoryPath != null) {
+                outputDir = new File(directoryPath);
+                createReadThreads();
+                loadConfigMap();
+            }
+            else status = ProcessStatus.INIT_ERROR;
+        } catch (NumberFormatException ignored) {
+            status = ProcessStatus.INIT_ERROR;
         }
-        else status = ProcessStatus.INIT_ERROR;
     }
 
     private void createReadThreads() {
@@ -190,7 +194,11 @@ public class ProcessStruct {
         Duration dur = handle != null ?
                 handle.info().totalCpuDuration().orElse(null) :
                 null;
-        if (dur == null) return -1;
+        if (dur == null) {
+            // fallback to crude calculation of exec time
+            long currTime = System.currentTimeMillis();
+            return currTime - timestamp;
+        }
         return dur.getSeconds() * (long) 1e9 + dur.getNano();
     }
 
@@ -203,7 +211,13 @@ public class ProcessStruct {
             try {
                 ret = Globals.getDurationStringNanos(readNanos());
             } catch (Exception e) {
-                ret = "Information Not Available";
+                if (status == ProcessStatus.ALIVE) {
+                    // fallback to crude calculation of exec time
+                    long currTime = System.currentTimeMillis();
+                    long elapsed = currTime - timestamp;
+                    ret = Globals.getDurationStringNanos(elapsed);
+                }
+                else ret = "Information Not Available";
             }
         } else {
             ret = Globals.getDurationString(dur);

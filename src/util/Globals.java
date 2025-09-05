@@ -53,6 +53,7 @@ public class Globals {
     }
 
     public static String getDurationStringNanos(long nanos) {
+        if (nanos == -1) throw new RuntimeException();
         return getDurationString((long) (nanos / 1e9));
     }
 
