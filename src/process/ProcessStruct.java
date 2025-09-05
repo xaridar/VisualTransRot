@@ -196,7 +196,7 @@ public class ProcessStruct {
                 null;
         if (dur == null) {
             // fallback to crude calculation of exec time
-            long currTime = System.currentTimeMillis();
+            long currTime = System.currentTimeMillis() * (long) 1e6;
             return currTime - timestamp;
         }
         return dur.getSeconds() * (long) 1e9 + dur.getNano();
@@ -213,7 +213,7 @@ public class ProcessStruct {
             } catch (Exception e) {
                 if (status == ProcessStatus.ALIVE) {
                     // fallback to crude calculation of exec time
-                    long currTime = System.currentTimeMillis();
+                    long currTime = System.currentTimeMillis() * (long) 1e6;
                     long elapsed = currTime - timestamp;
                     ret = Globals.getDurationStringNanos(elapsed);
                 }

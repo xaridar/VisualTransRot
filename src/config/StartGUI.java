@@ -271,16 +271,16 @@ public class StartGUI extends JFrame {
                     }
                 });
                 checkBox.setOpaque(false);
-                CustomMetalCheckboxUI ui = new CustomMetalCheckboxUI(Globals.accentColor, Globals.textColor);
+                CustomMetalCheckboxUI ui = new CustomMetalCheckboxUI(Globals.bgColor, Globals.accentColor);
                 checkBox.setUI(ui);
                 checkBox.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
                 checkBox.addMouseListener(new MouseAdapter() {
                     public void mouseEntered(MouseEvent e) {
-                        ui.setBgColor(Globals.accentColorDark);
+                        ui.setBgColor(Globals.bgColorDark);
                     }
 
                     public void mouseExited(MouseEvent e) {
-                        ui.setBgColor(Globals.accentColor);
+                        ui.setBgColor(Globals.bgColor);
                     }
                 });
 

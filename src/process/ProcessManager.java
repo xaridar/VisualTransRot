@@ -153,7 +153,7 @@ public class ProcessManager {
             pidThread.start();
         }
         else {
-            /* Unix operation is much simpler. The 'setsid' command allows for the desired behavior out-of-the-box. */
+            /* Unix operation is much simpler. The 'nohup' command allows for the desired behavior out-of-the-box. */
             List<String> unixArgs = arguments.stream().map(arg -> arg.replaceAll("\"", "")).collect(Collectors.toList());
             unixArgs.addAll(0, List.of("nohup", "java", "-jar", Globals.jarPath));
             long pid = new ProcessBuilder(unixArgs)

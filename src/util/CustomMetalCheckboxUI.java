@@ -38,8 +38,7 @@ public class CustomMetalCheckboxUI extends MetalCheckBoxUI {
 
         if (((JCheckBox) c).isSelected()) {
             g.setColor(checkColor);
-            g.setFont(new Font(Font.MONOSPACED, Font.BOLD, 10));
-            g.drawString("✓", viewRect.x + viewRect.width / 4, viewRect.y + viewRect.height - 2);
+            g.fillRect(viewRect.x + viewRect.width / 4, viewRect.y + viewRect.height / 4, (int) (viewRect.width * 0.65), (int) (viewRect.height * 0.65));
         }
     }
     
