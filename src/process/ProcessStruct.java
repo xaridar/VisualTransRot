@@ -25,6 +25,8 @@ public class ProcessStruct {
         }
     }
 
+    private long startTime = -1;
+
     private final List<ProcessLogListener> logListeners = new ArrayList<>();
     private final List<ProcessExitListener> exitListeners = new ArrayList<>();
 
@@ -37,7 +39,7 @@ public class ProcessStruct {
 
     private final List<String> stdoutLog = new ArrayList<>();
     private final List<String> stderrLog = new ArrayList<>();
-    private Map<String, Object> configMap = new LinkedHashMap<>();
+    private final Map<String, Object> configMap = new LinkedHashMap<>();
     private final Map<String, Integer> molCounts = new LinkedHashMap<>();
 
     private ProcessStatus status;
@@ -191,18 +193,20 @@ public class ProcessStruct {
     }
 
     private long getExecTimeLive() {
+        if (startTime == -1) startTime = System.currentTimeMillis();
         Duration dur = handle != null ?
                 handle.info().totalCpuDuration().orElse(null) :
                 null;
         if (dur == null) {
             // fallback to crude calculation of exec time
-            long currTime = System.currentTimeMillis() * (long) 1e6;
-            return currTime - timestamp;
+            long currTime = System.currentTimeMillis();
+            return (currTime - startTime) * (long) 1e6;
         }
         return dur.getSeconds() * (long) 1e9 + dur.getNano();
     }
 
     public String getExecTime() {
+        if (startTime == -1) startTime = System.currentTimeMillis();
         String ret;
         Duration dur = handle != null ?
                 handle.info().totalCpuDuration().orElse(null) :
@@ -213,8 +217,8 @@ public class ProcessStruct {
             } catch (Exception e) {
                 if (status == ProcessStatus.ALIVE) {
                     // fallback to crude calculation of exec time
-                    long currTime = System.currentTimeMillis() * (long) 1e6;
-                    long elapsed = currTime - timestamp;
+                    long currTime = System.currentTimeMillis();
+                    long elapsed = (currTime - startTime) * (long) 1e6;
                     ret = Globals.getDurationStringNanos(elapsed);
                 }
                 else ret = "Information Not Available";

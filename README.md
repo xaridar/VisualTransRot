@@ -19,12 +19,7 @@ Visual TransRot requires an installed Java Development Kit (JDK) of version 1.11
 ### Running VTR
 To simply use VTR on a system:
 1. Download the OS-specific package from [the latest release](../../releases/latest) and extract its files.
-2. **For MacOS and Linux:**\
-Open a terminal to the extracted folder, and run:
-    ```
-    chmod u+x *.jar
-    ```
-3. Either double click `vtr.jar` in your native file viewer, or use
+2. Either double click `vtr.jar` in your native file viewer, or use
     ```
     java -jar vtr.jar
     ```
