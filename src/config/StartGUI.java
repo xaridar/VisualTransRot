@@ -823,7 +823,7 @@ public class StartGUI extends JFrame {
                         populateSettings(configChooser.getSelectedFile().getAbsolutePath());
                     }
                 }, KeyEvent.VK_L),
-                new MenuOption("SAve config as...", e ->
+                new MenuOption("Save config As...", e ->
                 {
                     String saveAsPath = Globals.pref.get("SAVE_AS_PATH", Globals.parentPath);
                     JFileChooser fc = new JFileChooser(saveAsPath);
@@ -841,7 +841,7 @@ public class StartGUI extends JFrame {
                             saveSettings(fc.getSelectedFile().getAbsolutePath());
                         } catch (IOException ignored) {}
                     }
-                }, KeyEvent.VK_A),
+                }, KeyEvent.VK_A, 12),
                 new MenuOption("Save config", e -> saveSettings(Globals.configPath), KeyEvent.VK_S),
                 new MenuOption("Quit", e -> closeWindow(), KeyEvent.VK_Q)
         );

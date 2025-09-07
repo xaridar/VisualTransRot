@@ -69,7 +69,7 @@ Limitations in the interface only allow moleculed defined in the [Database Edito
 ### Settings Menu
 ![](images/settings.png)
 
-VTR exposes a number of options and features through the Settings Menu in the upper left corner. All settings located in the Settings Menu can be accessed by alt-shortcuts (shown by underlined characters in settings) or through CTRL shortcuts in parentheses.
+VTR exposes a number of options and features through the Settings Menu in the upper left corner. All settings located in the Settings Menu can be accessed by alt-shortcuts (shown by underlined characters in settings - these are the same characters as ctrl-shortcuts) or through CTRL shortcuts in parentheses.
 - #### `File`
   - `Edit Database` *(CTRL+D)* - Opens the [Database Editor](#database-editor).
   - `Load config.txt` *(CTRL+L)* - Opens a selector to open a configuration file & loads it into settings.
