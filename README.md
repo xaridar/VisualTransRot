@@ -196,3 +196,7 @@ All intermediate and final output `.xyz` files are accompanied by a 'Use as Inpu
 ## Licensing Information
 
 Visual TransRot is licensed under the [TransRot License](https://github.com/steventopper/TransRot/tree/main#licensing-information), an extension of All Rights Reserved.
+
+## How to report bugs, issues, or feature requests
+
+To report a bug or issue, or to submit a feature request, please create a new issue in the "Issues" tab.
