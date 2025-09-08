@@ -146,7 +146,7 @@ Each individual process in the Process Monitor displays the following details: P
 <a id="status"></a>
 - `Status` - The status of a process is one of 4 options, which are grouped by default in the Process Monitor:
   - `Processing` indicates that the processes is currently executing, and the `Elapsed Time` shown can be used to view its live execution time.
-  - `Run completed` indicates that a run has successfully finished and its [output files can be accessed](#output-files).
+  - `Run completed` indicates that a run has successfully finished and its [output files can be accessed](#output).
   - `Run terminated early` indicates that an error occurred sometime during the execution of TransRot, after a directory has been created for it. This error can be viewed by [checking error logs](#error-logs).
   - `Process failed to start` indicates that a TransRot run could not start and no output directory is associated with it. Typically, this occurs when a uniquely named directory cannot be created for the process in the save location.
   
