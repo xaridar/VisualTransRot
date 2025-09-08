@@ -14,7 +14,7 @@ VTR supports execution on all three major operating systems (Windows, MacOS, Lin
 - *Linux*: `Ubuntu`
 
 ### Prerequisites
-Visual TransRot requires an installed Java Development Kit (JDK) of version 1.11.0 or newer. The most up-to-date JDK can be found at https://www.oracle.com/java/technologies/downloads.
+Visual TransRot requires an installed Java Development Kit (JDK) of version 11.0 or newer. The most up-to-date JDK can be found at https://www.oracle.com/java/technologies/downloads.
 
 ### Running VTR
 To simply use VTR on a system:
