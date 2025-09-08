@@ -77,7 +77,7 @@ VTR exposes a number of options and features through the Settings Menu in the up
   - `Save config` *(CTRL+S)* - Saves the current configuration to saved_config.txt.
   - `Quit` *(CTRL+Q)* - Closes VTR.
 - #### `Options`
-  - `Set outut directory` *(CTRL+Y)* - Allows the user to select a location to create TransRot output directories in. Defaults to be local to the running location of VTR.
+  - `Set output directory` *(CTRL+Y)* - Allows the user to select a location to create TransRot output directories in. Defaults to be local to the running location of VTR.
   - `Show output directory` *(CTRL+W)* - Shows the current output directory in the OS-native file viewer.
 - #### `Processes`
   - `Monitor processes` *(CTRL+M)* - Opens the [Process Monitor](#process-monitor).
