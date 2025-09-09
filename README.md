@@ -25,8 +25,8 @@ To simply use VTR on a system:
     ```
     in the extracted directory to run VTR.
 
-### Contributing to VTR
-To contribute to VTR, first clone the GitHub repository. All code is written in Java and requires JDK>=11 to compile. The Main method is located in [Main.java](src/Main.java).
+### Installing from Source Code
+To build VTR from source, first download the source code from [here](../../releases/latest). All code is written in Java and requires JDK>=11 to compile. The Main method is located in [Main.java](src/Main.java).
 
 If manually compiled, `saved_config.txt`, `saved_dbase.txt`, `TransRot.jar`, and `wrapper.jar` must be placed to be siblings of the compiled output directory.
 
