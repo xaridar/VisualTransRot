@@ -1,7 +1,7 @@
 # Visual TransRot
 ![](images/vtr.png)
 
-Visual TransRot (VTR) is a Graphical User Interface (GUI) built for the visual configuration and use of [TransRot](https://github.com/steventopper/TransRot/tree/main).
+Visual TransRot (VTR) is a Graphical User Interface (GUI) built for the visual configuration and use of [TransRot](https://github.com/steventopper/TransRot/tree/main), an application package for Monte Carlo simulation.
 Visual TransRot is written in Java using the [Swing](https://en.wikipedia.org/wiki/Swing_(Java)) GUI toolkit for interface development.
 It interfaces directly with a packaged version of TransRot, which is internally executed to allow for independently running TransRot calculation processes.
 
@@ -10,7 +10,7 @@ It interfaces directly with a packaged version of TransRot, which is internally 
 ### OS Support
 VTR supports execution on all three major operating systems (Windows, MacOS, Linux) and TransRot has been tested on:
 - *Windows*: `Windows 10`, `Windows 11`
-- *MacOS*: `El Catalina`, `Monterey`, `Ventur`, `Sequoia`
+- *MacOS*: `El Catalina`, `Monterey`, `Ventura`, `Sequoia`
 - *Linux*: `Ubuntu`
 
 ### Prerequisites
