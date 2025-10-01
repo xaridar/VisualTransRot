@@ -41,7 +41,7 @@ If no nickname is specified for a process, its unique Process ID is used by defa
 ### Config
 ![](images/config.png)
 
-VTR exposes complete user control over the values of the [20 configuration variables used in TransRot](https://github.com/steventopper/TransRot/tree/main#how-to-customize-run-parameters).
+VTR exposes complete user control over the values of the [21 configuration variables used in TransRot](https://github.com/steventopper/TransRot/tree/main#how-to-customize-run-parameters).
 These variables include integer, decimal, and boolean inputs to allow complete control over TransRot runs.
 When a run has been started or the configuration is saved by the user, [saved_config.txt](saved_config.txt) is updated automatically to reflect any configuration changes to be used during runs of TransRot.
 
@@ -55,11 +55,14 @@ Beyond allowing basic editing of configuration variables, the config interface s
   - When `Static Temperature` is *true*, `Points per Tooth`, `Points Added Per Tooth`, `Number of Teeth`, `Temperature Decrease per Tooth`, and `0K Finale` are all disabled.
   - When `Static Temperature` is *false*, `Write Energies When Static Temperature` is disabled.
   - When either `Static Temperature` or `Write Configurational Heat Capacities` is *false*, `Number of Equilibration Configurations` is disabled.
-  
+
 - **Use Input.xyz** - The `Use Input.xyz` variable provides a more complex functionality than other boolean variables.
   - When `Use Input.xyz` is selected, a 'Choose Input.xyz' button is enabled. Clicking this allows selection of a file to be used as Input.xyz in runs of TransRot. Selected files must be of the proper format, described in [TransRot's README.md](https://github.com/steventopper/TransRot/tree/main#use-input).
   - When `Use Input.xyz` is selected, [Molecule Counts](#molecule-counts) are removed from the interface.
-  
+
+- **Choose All Interaction Parameters** - The `Choose All Interaction Parameters` works  the same way.
+  - The associated button allows use of an interaction parameter file, with the format specified in [TransRot's README.md](https://github.com/steventopper/TransRot/tree/main#use-params).
+
 ### Molecule Counts
 ![](images/counts.png)
 

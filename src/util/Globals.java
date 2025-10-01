@@ -213,6 +213,9 @@ public class Globals {
                 "Use Input.xyz", new Constraint.BooleanConstraint(), 1
             ));
         settings.add(new SettingInfo(
+                "Choose All Interaction Parameters", new Constraint.BooleanConstraint(), 1
+        ));
+        settings.add(new SettingInfo(
                 "0K Finale", new Constraint.BooleanConstraint(), 1, "!Static Temperature"
             ));
         settings.add(new SettingInfo(
@@ -222,7 +225,7 @@ public class Globals {
                 "Write Energies When Static Temperature", new Constraint.BooleanConstraint(), 2, "Static Temperature"
             ));
         settings.add(new SettingInfo(
-                "Write Configurational Heat Capacities", new Constraint.BooleanConstraint(), 2
+                "Write Configurational Heat Capacities", new Constraint.BooleanConstraint(), 1
             ));
         settings.add(new SettingInfo(
                 "Number of Equilibration Configurations", new Constraint.IntConstraint(0), 2, "Static Temperature", "Write Configurational Heat Capacities"
