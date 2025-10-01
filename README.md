@@ -1,7 +1,7 @@
 # Visual TransRot
 ![](images/vtr.png)
 
-Visual TransRot (VTR) is a Graphical User Interface (GUI) built for the visual configuration and use of [TransRot](https://github.com/steventopper/TransRot/tree/main).
+Visual TransRot (VTR) is a Graphical User Interface (GUI) built for the visual configuration and use of [TransRot](https://github.com/steventopper/TransRot/tree/main), an application package for Monte Carlo simulation.
 Visual TransRot is written in Java using the [Swing](https://en.wikipedia.org/wiki/Swing_(Java)) GUI toolkit for interface development.
 It interfaces directly with a packaged version of TransRot, which is internally executed to allow for independently running TransRot calculation processes.
 
@@ -10,11 +10,11 @@ It interfaces directly with a packaged version of TransRot, which is internally 
 ### OS Support
 VTR supports execution on all three major operating systems (Windows, MacOS, Linux) and TransRot has been tested on:
 - *Windows*: `Windows 10`, `Windows 11`
-- *MacOS*: `El Catalina`, `Monterey`, `Ventur`, `Sequoia`
+- *MacOS*: `El Catalina`, `Monterey`, `Ventura`, `Sequoia`
 - *Linux*: `Ubuntu`
 
 ### Prerequisites
-Visual TransRot requires an installed Java Development Kit (JDK) of version 1.11.0 or newer. The most up-to-date JDK can be found at https://www.oracle.com/java/technologies/downloads.
+Visual TransRot requires an installed Java Development Kit (JDK) of version 11.0 or newer. The most up-to-date JDK can be found at https://www.oracle.com/java/technologies/downloads.
 
 ### Running VTR
 To simply use VTR on a system:
@@ -25,8 +25,8 @@ To simply use VTR on a system:
     ```
     in the extracted directory to run VTR.
 
-### Contributing to VTR
-To contribute to VTR, first clone the GitHub repository. All code is written in Java and requires JDK>=11 to compile. The Main method is located in [Main.java](src/Main.java).
+### Installing from Source Code
+To build VTR from source, first download the source code from [here](../../releases/latest). All code is written in Java and requires JDK>=11 to compile. The Main method is located in [Main.java](src/Main.java).
 
 If manually compiled, `saved_config.txt`, `saved_dbase.txt`, `TransRot.jar`, and `wrapper.jar` must be placed to be siblings of the compiled output directory.
 
@@ -149,7 +149,7 @@ Each individual process in the Process Monitor displays the following details: P
 <a id="status"></a>
 - `Status` - The status of a process is one of 4 options, which are grouped by default in the Process Monitor:
   - `Processing` indicates that the processes is currently executing, and the `Elapsed Time` shown can be used to view its live execution time.
-  - `Run completed` indicates that a run has successfully finished and its [output files can be accessed](#output-files).
+  - `Run completed` indicates that a run has successfully finished and its [output files can be accessed](#output).
   - `Run terminated early` indicates that an error occurred sometime during the execution of TransRot, after a directory has been created for it. This error can be viewed by [checking error logs](#error-logs).
   - `Process failed to start` indicates that a TransRot run could not start and no output directory is associated with it. Typically, this occurs when a uniquely named directory cannot be created for the process in the save location.
   
