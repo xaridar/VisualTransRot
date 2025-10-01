@@ -48,14 +48,17 @@ public class StartGUI extends JFrame {
     private final Set<String> usedMolNames = new HashSet<>();
     private JLabel errorLabel;
     String inputFile = "";
+    String paramsFile = "";
 
-    private JButton fileButton;
+    private JButton fileButtonInp;
+    private JButton fileButtonParams;
     private JPanel molPanel = null;
 
     private JButton addMolBtn;
 
     private String outputFilepath;
-    private JLabel fileName;
+    private JLabel fileNameInp;
+    private JLabel fileNameParams;
 
     private StartGUI() {
         super(Globals.appName);
@@ -342,7 +345,7 @@ public class StartGUI extends JFrame {
                 settingPanel.setBorder(defBorder);
                 settingPanel.add(checkBox);
 
-                // Input.xz file input
+                // Input.xyz file input
                 if (setting.getName().equals("Use Input.xyz")) {
                     JPanel newPanel = new JPanel();
                     newPanel.setLayout(new BoxLayout(newPanel, BoxLayout.X_AXIS));
@@ -357,23 +360,23 @@ public class StartGUI extends JFrame {
                     settingPanel.add(newPanel);
                     settingPanel.setAlignmentY(Component.CENTER_ALIGNMENT);
 
-                    fileButton = new JButton("Choose Input.xyz...");
-                    fileButton.setEnabled(checkBox.isSelected());
-                    fileButton.setBackground(Globals.bgColorDark);
-                    fileButton.setUI(new MetalButtonUI() {
+                    fileButtonInp = new JButton("Choose Input.xyz...");
+                    fileButtonInp.setEnabled(checkBox.isSelected());
+                    fileButtonInp.setBackground(Globals.bgColorDark);
+                    fileButtonInp.setUI(new MetalButtonUI() {
                         @Override
                         protected Color getDisabledTextColor() {
                             return Globals.textColorDisabled;
                         }
                     });
-                    fileButton.setForeground(Globals.linkColor);
-                    fileButton.setFont(Globals.btnFontSmall);
-                    fileButton.setAlignmentX(Component.CENTER_ALIGNMENT);
-                    fileButton.setBorder(BorderFactory.createCompoundBorder(
+                    fileButtonInp.setForeground(Globals.linkColor);
+                    fileButtonInp.setFont(Globals.btnFontSmall);
+                    fileButtonInp.setAlignmentX(Component.CENTER_ALIGNMENT);
+                    fileButtonInp.setBorder(BorderFactory.createCompoundBorder(
                             BorderFactory.createLineBorder(Globals.menuBgColor),
                             BorderFactory.createEmptyBorder(3, 5, 3, 5)));
-                    fileButton.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-                    fileButton.setUI(new MetalButtonUI() {
+                    fileButtonInp.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+                    fileButtonInp.setUI(new MetalButtonUI() {
                         protected Color getSelectColor() {
                             return Globals.bgColorDark;
                         }
@@ -382,16 +385,16 @@ public class StartGUI extends JFrame {
                             return Globals.bgColorDark;
                         }
                     });
-                    fileButton.addMouseListener(new MouseAdapter() {
+                    fileButtonInp.addMouseListener(new MouseAdapter() {
                         @Override
                         public void mousePressed(MouseEvent e) {
                             if (e.getButton() != MouseEvent.BUTTON1) return;
-                            fileButton.setForeground(Globals.linkColorAlt);
+                            fileButtonInp.setForeground(Globals.linkColorAlt);
                         }
 
                         @Override
                         public void mouseReleased(MouseEvent e) {
-                            fileButton.setForeground(Globals.linkColor);
+                            fileButtonInp.setForeground(Globals.linkColor);
                         }
                     });
 
@@ -401,44 +404,142 @@ public class StartGUI extends JFrame {
                     fileChooser.setFileFilter(new FileNameExtensionFilter(".xyz input files", "xyz"));
                     fileChooser.setAcceptAllFileFilterUsed(false);
                     fileChooser.setDialogTitle("Choose an Input.xyz");
-                    settingPanel.add(fileButton);
+                    settingPanel.add(fileButtonInp);
 
-                    fileName = new JLabel();
-                    fileName.setFont(Globals.settingsFontNoBold);
-                    fileName.setOpaque(false);
-                    fileName.setForeground(Globals.textColor);
-                    fileName.setVisible(false);
-                    fileName.setAlignmentX(Component.CENTER_ALIGNMENT);
-                    fileName.addMouseListener(new MouseAdapter() {
+                    fileNameInp = new JLabel();
+                    fileNameInp.setFont(Globals.settingsFontNoBold);
+                    fileNameInp.setOpaque(false);
+                    fileNameInp.setForeground(Globals.textColor);
+                    fileNameInp.setVisible(false);
+                    fileNameInp.setAlignmentX(Component.CENTER_ALIGNMENT);
+                    fileNameInp.addMouseListener(new MouseAdapter() {
                         public void mouseClicked(MouseEvent e) {
                             if (e.getButton() != MouseEvent.BUTTON1) return;
-                            fileButton.requestFocus();
-                            fileButton.doClick();
+                            fileButtonInp.requestFocus();
+                            fileButtonInp.doClick();
                         }
                     });
-                    settingPanel.add(fileName);
-                    fileButton.addActionListener(e -> {
+                    settingPanel.add(fileNameInp);
+                    fileButtonInp.addActionListener(e -> {
                         setError("");
                         int out = fileChooser.showOpenDialog(StartGUI.this);
                         Globals.pref.put("INPUT_PATH", fileChooser.getCurrentDirectory().getAbsolutePath());
                         fileChooser.setCurrentDirectory(fileChooser.getCurrentDirectory());
                         if (out == JFileChooser.APPROVE_OPTION) {
-                            fileName.setText(fileChooser.getSelectedFile().getName());
-                            fileName.setVisible(true);
+                            fileNameInp.setText(fileChooser.getSelectedFile().getName());
+                            fileNameInp.setVisible(true);
                             inputFile = fileChooser.getSelectedFile().getAbsolutePath();
                         } else {
-                            fileName.setText("");
-                            fileName.setVisible(false);
+                            fileNameInp.setText("");
+                            fileNameInp.setVisible(false);
                             inputFile = "";
                         }
                     });
 
                     checkBox.addItemListener(e -> {
                         setError("");
-                        fileButton.setEnabled(checkBox.isSelected());
+                        fileButtonInp.setEnabled(checkBox.isSelected());
                         molPanel.setVisible(!checkBox.isSelected());
                         addMolBtn.setVisible(usedMolNames.size() != DatabaseGUI.getInstance().getMolecules().size() && !checkBox.isSelected());
-                        fileName.setVisible(checkBox.isSelected() && inputFile.length() > 0);
+                        fileNameInp.setVisible(checkBox.isSelected() && inputFile.length() > 0);
+                    });
+                }
+
+                // Interaction Parameters file input
+                if (setting.getName().equals("Choose All Interaction Parameters")) {
+                    JPanel newPanel = new JPanel();
+                    newPanel.setLayout(new BoxLayout(newPanel, BoxLayout.X_AXIS));
+                    newPanel.setOpaque(false);
+                    newPanel.add(settingLabel);
+                    newPanel.add(checkBox);
+                    newPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 5, 0));
+                    newPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+                    settingPanel.removeAll();
+                    settingPanel.setLayout(new BoxLayout(settingPanel, BoxLayout.Y_AXIS));
+                    settingPanel.add(newPanel);
+                    settingPanel.setAlignmentY(Component.CENTER_ALIGNMENT);
+
+                    fileButtonParams = new JButton("Choose interaction_params.txt...");
+                    fileButtonParams.setEnabled(checkBox.isSelected());
+                    fileButtonParams.setBackground(Globals.bgColorDark);
+                    fileButtonParams.setUI(new MetalButtonUI() {
+                        @Override
+                        protected Color getDisabledTextColor() {
+                            return Globals.textColorDisabled;
+                        }
+                    });
+                    fileButtonParams.setForeground(Globals.linkColor);
+                    fileButtonParams.setFont(Globals.btnFontSmall);
+                    fileButtonParams.setAlignmentX(Component.CENTER_ALIGNMENT);
+                    fileButtonParams.setBorder(BorderFactory.createCompoundBorder(
+                            BorderFactory.createLineBorder(Globals.menuBgColor),
+                            BorderFactory.createEmptyBorder(3, 5, 3, 5)));
+                    fileButtonParams.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+                    fileButtonParams.setUI(new MetalButtonUI() {
+                        protected Color getSelectColor() {
+                            return Globals.bgColorDark;
+                        }
+
+                        protected Color getFocusColor() {
+                            return Globals.bgColorDark;
+                        }
+                    });
+                    fileButtonParams.addMouseListener(new MouseAdapter() {
+                        @Override
+                        public void mousePressed(MouseEvent e) {
+                            if (e.getButton() != MouseEvent.BUTTON1) return;
+                            fileButtonParams.setForeground(Globals.linkColorAlt);
+                        }
+
+                        @Override
+                        public void mouseReleased(MouseEvent e) {
+                            fileButtonParams.setForeground(Globals.linkColor);
+                        }
+                    });
+
+                    String paramsPath = Globals.pref.get("PARAMS_PATH", Globals.parentPath);
+                    JFileChooser fileChooser = new JFileChooser(paramsPath);
+                    fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+                    fileChooser.setFileFilter(new FileNameExtensionFilter(".txt input files", "txt"));
+                    fileChooser.setAcceptAllFileFilterUsed(false);
+                    fileChooser.setDialogTitle("Choose an interaction_parameters.txt");
+                    settingPanel.add(fileButtonParams);
+
+                    fileNameParams = new JLabel();
+                    fileNameParams.setFont(Globals.settingsFontNoBold);
+                    fileNameParams.setOpaque(false);
+                    fileNameParams.setForeground(Globals.textColor);
+                    fileNameParams.setVisible(false);
+                    fileNameParams.setAlignmentX(Component.CENTER_ALIGNMENT);
+                    fileNameParams.addMouseListener(new MouseAdapter() {
+                        public void mouseClicked(MouseEvent e) {
+                            if (e.getButton() != MouseEvent.BUTTON1) return;
+                            fileButtonParams.requestFocus();
+                            fileButtonParams.doClick();
+                        }
+                    });
+                    settingPanel.add(fileNameParams);
+                    fileButtonParams.addActionListener(e -> {
+                        setError("");
+                        int out = fileChooser.showOpenDialog(StartGUI.this);
+                        Globals.pref.put("PARAMS_PATH", fileChooser.getCurrentDirectory().getAbsolutePath());
+                        fileChooser.setCurrentDirectory(fileChooser.getCurrentDirectory());
+                        if (out == JFileChooser.APPROVE_OPTION) {
+                            fileNameParams.setText(fileChooser.getSelectedFile().getName());
+                            fileNameParams.setVisible(true);
+                            paramsFile = fileChooser.getSelectedFile().getAbsolutePath();
+                        } else {
+                            fileNameParams.setText("");
+                            fileNameParams.setVisible(false);
+                            paramsFile = "";
+                        }
+                    });
+
+                    checkBox.addItemListener(e -> {
+                        setError("");
+                        fileButtonParams.setEnabled(checkBox.isSelected());
+                        fileNameParams.setVisible(checkBox.isSelected() && paramsFile.length() > 0);
                     });
                 }
             }
@@ -524,6 +625,15 @@ public class StartGUI extends JFrame {
                         "-c", '"' + Globals.configPath + '"', "-d", '"' + Globals.dbPath + '"', "-o", outputFilepath
                 ));
                 int ptCount, numMols;
+                if ((boolean) settings.get("Choose All Interaction Parameters")) {
+                    if (paramsFile.length() == 0) {
+                        setError("Please select an interaction_params.txt file or deselect 'Choose All Interaction Parameters'");
+                        return;
+                    }
+                    arguments.add("-p");
+                    arguments.add('"' + paramsFile + '"');
+                }
+
                 if ((boolean) settings.get("Use Input.xyz")) {
                     if (inputFile.length() == 0) {
                         setError("Please select an Input.xyz file or deselect 'Use Input.xyz'");
@@ -971,6 +1081,7 @@ public class StartGUI extends JFrame {
         if (!new File(Globals.pref.get("SAVE_AS_DB_PATH", Globals.parentPath)).exists()) Globals.pref.remove("SAVE_AS_DB_PATH");
         if (!new File(Globals.pref.get("CONFIG_PATH", Globals.parentPath)).exists()) Globals.pref.remove("CONFIG_PATH");
         if (!new File(Globals.pref.get("INPUT_PATH", Globals.parentPath)).exists()) Globals.pref.remove("INPUT_PATH");
+        if (!new File(Globals.pref.get("PARAMS_PATH", Globals.parentPath)).exists()) Globals.pref.remove("PARAMS_PATH");
         if (!new File(Globals.pref.get("DB_PATH", Globals.parentPath)).exists()) Globals.pref.remove("DB_PATH");
 
         outputFilepath = Globals.pref.get("OUTPUT_PATH", Globals.parentPath);
@@ -1067,7 +1178,8 @@ public class StartGUI extends JFrame {
             });
         }
         
-        fileButton.setEnabled((boolean) settings.get("Use Input.xyz"));
+        fileButtonInp.setEnabled((boolean) settings.get("Use Input.xyz"));
+        fileButtonParams.setEnabled((boolean) settings.get("Choose All Interaction Parameters"));
     }
 
     public void populateSettings(Map<String, Object> settings, Map<String, Integer> molCounts) {
@@ -1139,8 +1251,8 @@ public class StartGUI extends JFrame {
         if (!file.getName().endsWith(".xyz")) return;
 
         if (!((boolean) settings.get("Use Input.xyz"))) checks.get("Use Input.xyz").doClick();
-        fileName.setText(file.getName());
-        fileName.setVisible(true);
+        fileNameInp.setText(file.getName());
+        fileNameInp.setVisible(true);
         inputFile = file.getAbsolutePath();
     }
 }

@@ -264,7 +264,7 @@ public class ProcessStruct {
                 for (int i = 0; i < 2; i++) {
                     reader.nextLine();
                 }
-                for (int i = 0; i < 20; i++) {
+                for (int i = 0; i < 21; i++) {
                     String line = reader.nextLine();
                     if (!line.contains(":")) break;
                     String key = line.split(":")[0].split(" \\(true/false\\)")[0];

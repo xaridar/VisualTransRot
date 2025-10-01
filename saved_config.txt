@@ -1,27 +1,28 @@
-//Sawtooth Annealing Configuration Options
-//Use 2 or more spaces between label and value
-Max Temperature (K):                                  10000.0
-Moves per Point:                                      20000
-Points per Tooth:                                     10
-Points Added per Tooth:                               0
-Number of Teeth:                                      4
-Temperature Decrease per Tooth:                       0.8
-Max Translation Distance (Angstroms):                 0.25
-Magwalk Translation Multiplication Factor:            10.0
-Magwalk Translation Probability:                      0.1
-Max Rotation (Radians):                               0.523599
-Magwalk Rotation Probability:                         0.1
-Length of Cubic Space:                                5.0
-Max Failures During Propagation:                      20
-Use Input.xyz (true/false):                           false
-0K Finale (true/false):                               false
-Static Temperature (true/false):                      false
+// Required comment line
+// Required comment line
+Max Temperature (K):  10000.0
+Moves per Point:  20000
+Points per Tooth:  10
+Points Added per Tooth:  0
+Number of Teeth:  4
+Temperature Decrease per Tooth:  0.8
+Max Translation Distance (Angstroms):  0.25
+Magwalk Translation Multiplication Factor:  10.0
+Magwalk Translation Probability:  0.1
+Max Rotation (Radians):  0.523599
+Magwalk Rotation Probability:  0.1
+Length of Cubic Space:  5.0
+Max Failures During Propagation:  20
+Use Input.xyz (true/false):  false
+Choose All Interaction Parameters (true/false): false
+0K Finale (true/false):  false
+Static Temperature (true/false):  false
 Write Energies When Static Temperature (true/false):  true
-Write Configurational Heat Capacities (true/false):   true
-Number of Equilibration Configurations:               1000
-Write Acceptance Ratios (true/false):                 true
+Write Configurational Heat Capacities (true/false):  true
+Number of Equilibration Configurations:  1000
+Write Acceptance Ratios (true/false):  true
 
-//List of Molecules to be Used
-//Ex - H2O 2 <- 2 Molecules of H2O (separate molecular formula and number with space)
+// Required comment line
+// Required comment line
 NH4+  4
 Cl-  4
