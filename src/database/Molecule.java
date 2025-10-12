@@ -222,7 +222,7 @@ public class Molecule {
             }
 
             boolean isValid(String s) {
-                return s.matches("^(\\S+\\s?)*$");
+                return s.matches("^(\\S+\\s?)+$");
             }
         });
         namePanel.add(nameField);
