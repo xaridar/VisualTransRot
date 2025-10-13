@@ -5,6 +5,7 @@ import util.Globals;
 import java.io.*;
 import java.sql.Timestamp;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -194,24 +195,25 @@ public class ProcessStruct {
 
     private long getExecTimeLive() {
         if (startTime == -1) startTime = System.currentTimeMillis();
-        Duration dur = handle != null ?
-                handle.info().totalCpuDuration().orElse(null) :
+        Instant inst = handle != null ?
+                handle.info().startInstant().orElse(null) :
                 null;
-        if (dur == null) {
+        if (inst == null) {
             // fallback to crude calculation of exec time
             long currTime = System.currentTimeMillis();
             return (currTime - startTime) * (long) 1e6;
         }
+        Duration dur = Duration.between(inst, Instant.now());
         return dur.getSeconds() * (long) 1e9 + dur.getNano();
     }
 
     public String getExecTime() {
         if (startTime == -1) startTime = System.currentTimeMillis();
         String ret;
-        Duration dur = handle != null ?
-                handle.info().totalCpuDuration().orElse(null) :
+        Instant inst = handle != null ?
+                handle.info().startInstant().orElse(null) :
                 null;
-        if (dur == null) {
+        if (inst == null) {
             try {
                 ret = Globals.getDurationStringNanos(readNanos());
             } catch (Exception e) {
@@ -224,7 +226,7 @@ public class ProcessStruct {
                 else ret = "Information Not Available";
             }
         } else {
-            ret = Globals.getDurationString(dur);
+            ret = Globals.getDurationString(Duration.between(inst, Instant.now()));
         }
         return ret;
     }
