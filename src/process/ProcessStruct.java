@@ -5,6 +5,7 @@ import util.Globals;
 import java.io.*;
 import java.sql.Timestamp;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -194,24 +195,25 @@ public class ProcessStruct {
 
     private long getExecTimeLive() {
         if (startTime == -1) startTime = System.currentTimeMillis();
-        Duration dur = handle != null ?
-                handle.info().totalCpuDuration().orElse(null) :
+        Instant inst = (handle != null && status == ProcessStatus.ALIVE) ?
+                handle.info().startInstant().orElse(null) :
                 null;
-        if (dur == null) {
+        if (inst == null) {
             // fallback to crude calculation of exec time
             long currTime = System.currentTimeMillis();
             return (currTime - startTime) * (long) 1e6;
         }
+        Duration dur = Duration.between(inst, Instant.now());
         return dur.getSeconds() * (long) 1e9 + dur.getNano();
     }
 
     public String getExecTime() {
         if (startTime == -1) startTime = System.currentTimeMillis();
         String ret;
-        Duration dur = handle != null ?
-                handle.info().totalCpuDuration().orElse(null) :
+        Instant inst = (handle != null && status == ProcessStatus.ALIVE) ?
+                handle.info().startInstant().orElse(null) :
                 null;
-        if (dur == null) {
+        if (inst == null) {
             try {
                 ret = Globals.getDurationStringNanos(readNanos());
             } catch (Exception e) {
@@ -224,7 +226,7 @@ public class ProcessStruct {
                 else ret = "Information Not Available";
             }
         } else {
-            ret = Globals.getDurationString(dur);
+            ret = Globals.getDurationString(Duration.between(inst, Instant.now()));
         }
         return ret;
     }
@@ -261,29 +263,26 @@ public class ProcessStruct {
                 e.printStackTrace();
             }
             try (Scanner reader = new Scanner(configFile)) {
-                for (int i = 0; i < 2; i++) {
-                    reader.nextLine();
-                }
-                for (int i = 0; i < 21; i++) {
-                    String line = reader.nextLine();
-                    if (!line.contains(":")) break;
-                    String key = line.split(":")[0].split(" \\(true/false\\)")[0];
-                    String value = line.split(":")[1].trim();
-                    if (value.equals("true") || value.equals("false"))
-                        configMap.put(key, value.equals("true"));
-                    else if (value.matches("^[0-9]+$"))
-                        configMap.put(key, Integer.parseInt(value));
-                    else
-                        configMap.put(key, Double.parseDouble(value));
-                }
-                for (int i = 0; i < 3; i++) {
-                    reader.nextLine();
-                }
-                while (reader.hasNextLine()) {
-                    String line = reader.nextLine();
-                    String mol = line.split(" {2,}")[0];
-                    int count = Integer.parseInt(line.split(" {2,}")[1]);
-                    molCounts.put(mol, count);
+                if (!reader.hasNextLine()) return;
+                for (String line = reader.nextLine().trim();; line = reader.nextLine().trim()) {
+                    if (line.matches("^.*:\\s{2,}(\\d+(.\\d+)?|true|false)$")) {
+                        // Setting
+                        String key = line.split(":")[0].split(" \\(true/false\\)")[0];
+                        String value = line.split(":")[1].trim();
+                        if (value.equals("true") || value.equals("false"))
+                            configMap.put(key, value.equals("true"));
+                        else if (value.matches("^[0-9]+$"))
+                            configMap.put(key, Integer.parseInt(value));
+                        else
+                            configMap.put(key, Double.parseDouble(value));
+                    } else if (line.matches("^(\\S+\\s?)+ {2,}\\d+$")) {
+                        // Molecule count
+                        String mol = line.split(" {2,}")[0];
+                        int count = Integer.parseInt(line.split(" {2,}")[1]);
+                        molCounts.put(mol, count);
+                    } else if (line.startsWith("//") || line.length() == 0) continue;
+
+                    if (!reader.hasNextLine()) break;
                 }
             } catch (IOException e) {
                 e.printStackTrace();

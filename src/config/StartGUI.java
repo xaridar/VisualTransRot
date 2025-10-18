@@ -32,6 +32,7 @@ import java.util.stream.Collectors;
 public class StartGUI extends JFrame {
 
     private static StartGUI Instance;
+    private JLabel fixLabel = new JLabel();
 
     public static StartGUI getInstance() {
         if (Instance == null) Instance = new StartGUI();
@@ -683,6 +684,7 @@ public class StartGUI extends JFrame {
         selectedMols.clear();
         currMolDropdowns.clear();
         usedMolNames.clear();
+        molPanel.add(fixLabel);
         molPanel.repaint();
         molPanel.revalidate();
     }
@@ -885,7 +887,10 @@ public class StartGUI extends JFrame {
         fullPanel.add(delBtn);
         fullPanel.add(Box.createRigidArea(new Dimension(16, 0)));
 
+        // Remove bugfix label
+        molPanel.remove(fixLabel);
         molPanel.add(fullPanel);
+        molPanel.add(fixLabel);
         molPanel.setMaximumSize(molPanel.getPreferredSize());
         molPanel.repaint();
         molPanel.revalidate();
@@ -906,7 +911,8 @@ public class StartGUI extends JFrame {
         DefaultComboBoxModel<String> model = new DefaultComboBoxModel<>(s.toArray(new String[]{}));
         cb.setModel(model);
         cb.setSelectedItem(selected);
-        cb.revalidate();
+        molPanel.repaint();
+        molPanel.revalidate();
     }
 
     private void addMenu() {
@@ -1121,10 +1127,6 @@ public class StartGUI extends JFrame {
     public void populateSettings(String path) {
         File valsFile = new File(path);
         try (Scanner s = new Scanner(valsFile)) {
-            // Skip the first two lines
-            for (int i = 0; i < 2; i++) {
-                s.nextLine();
-            }
             while (s.hasNextLine()) {
                 String line = s.nextLine();
                 if (!line.contains(":")) {
@@ -1222,8 +1224,7 @@ public class StartGUI extends JFrame {
         try (FileWriter writer = new FileWriter(path)) {
             // Long list of functions that sorts the list of settings as they are
             // sorted in Globals.setting before formatting into a String to write
-            String str = "// Required comment line\n// Required comment line\n" +
-                settings
+            String str = settings
                     .keySet() // returns setting names
                     .stream()
                     .map(k -> Globals.settings.stream().map(Globals.SettingInfo::getName).collect(Collectors.toList()).indexOf(k)) // maps to indices in Globals.settings
@@ -1233,8 +1234,7 @@ public class StartGUI extends JFrame {
                                     .getType() == Constraint.DataType.BOOLEAN ? " (true/false)" : ""),
                             settings.get(Globals.settings.get(i).getName()))) // converts back to setting values
                     .map(entry -> String.format("%s:  %s", entry.getKey(), entry.getValue()))
-                        .collect(Collectors.joining("\n"));
-            str += "\n\n// Required comment line\n// Required comment line\n";
+                        .collect(Collectors.joining("\n")) + "\n";
             if (!overrideMols) str += selectedMols.keySet().stream().filter(key -> !key.equals("") && selectedMols.get(key) > 0).map(key -> String.format("%s  %d", key, selectedMols.get(key))).collect(Collectors.joining("\n"));
             else str += DatabaseGUI.getInstance().getMoleculeNames().get(0) + "  " + "1";
             writer.write(str);

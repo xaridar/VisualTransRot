@@ -147,7 +147,7 @@ public class ProcessGUI extends JFrame {
         });
 
         // hard-coded widths
-        table.getColumnModel().getColumn(0).setPreferredWidth(60);
+        table.getColumnModel().getColumn(0).setPreferredWidth(100);
         table.getColumnModel().getColumn(1).setPreferredWidth(120);
         table.getColumnModel().getColumn(2).setPreferredWidth(180);
         table.getColumnModel().getColumn(3).setPreferredWidth(190);
