@@ -1,7 +1,8 @@
 # Visual TransRot
 ![](images/vtr.png)
 
-Visual TransRot (VTR) is a Graphical User Interface (GUI) built for the visual configuration and use of [TransRot](https://github.com/steventopper/TransRot/tree/main), an application package for simulated annealing optimizations of molecular and atomic clusters using rigid-body Monte Carlo simulation of the particles' translational and rotational degrees of freedom.
+Visual TransRot (VTR) is a Graphical User Interface (GUI) built for the visual configuration and use of [TransRot](https://github.com/steventopper/TransRot/tree/main). TransRot (which stands for translation-rotation) is used to carry out simulated annealing geometry optimizations of atomic and molecular clusters using rigid body Monte Carlo methods. 
+
 Visual TransRot is written in Java using the [Swing](https://en.wikipedia.org/wiki/Swing_(Java)) GUI toolkit for interface development.
 It interfaces directly with a packaged version of TransRot, which is internally executed to allow for independently running TransRot calculation processes.
 
