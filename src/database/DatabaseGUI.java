@@ -1,20 +1,23 @@
 package database;
 
-import java.awt.Component;
-import java.awt.event.KeyEvent;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
+import config.StartGUI;
+import util.Globals;
+import util.SaveListener;
+
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.*;
+import java.util.List;
+import java.util.function.BiFunction;
+import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
-
-import javax.swing.*;
-import javax.swing.filechooser.FileNameExtensionFilter;
-
-import util.Globals;
-import util.SaveListener;
+import java.util.stream.Stream;
 
 public class DatabaseGUI extends JFrame {
 
@@ -27,197 +30,168 @@ public class DatabaseGUI extends JFrame {
 
     private final List<SaveListener> listeners = new ArrayList<>();
 
-    private List<Molecule> molecules = new ArrayList<>();
-    private final List<JPanel> molPanels = new ArrayList<>();
-    private final JPanel panel;
-    private final JLabel noMolPanel;
-    private final JLabel errorLabel;
+    private final List<Molecule> molecules = new ArrayList<>();
+    private List<Molecule> sortedList = new ArrayList<>();
 
-    private final JScrollBar vertical;
-    
+    private JPanel molPanel;
+
+    private String currSearch = "";
+    private MoleculeSorter sorter = MoleculeSorter.DefaultSorter;
+    private List<Predicate<Molecule>> filters = new ArrayList<>();
+
     private DatabaseGUI() {
         super(Globals.appName + " - Database");
-        setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
-        addWindowListener(new WindowAdapter() {
-            @Override
-            public void windowClosing(WindowEvent e) {
-                closeWindow();
-            }
-        });
+        sortedList.addAll(molecules);
 
         JPanel fullPanel = new JPanel();
         fullPanel.setBackground(Globals.bgColor);
         fullPanel.setLayout(new BoxLayout(fullPanel, BoxLayout.Y_AXIS));
 
-        panel = new JPanel();
-        panel.setBorder(BorderFactory.createEmptyBorder(20, 5, 20, 5));
-        panel.setBackground(Globals.bgColor);
-        BoxLayout bl = new BoxLayout(panel, BoxLayout.Y_AXIS);
-        panel.setLayout(bl);
 
-        JScrollPane sp = new JScrollPane(panel, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
+        molPanel = new JPanel();
+        molPanel.setLayout(new BoxLayout(molPanel, BoxLayout.Y_AXIS));
+        repaintMols();
+
+        JScrollPane sp = new JScrollPane(molPanel, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
                 JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-        vertical = sp.getVerticalScrollBar();
+        JScrollBar vertical = sp.getVerticalScrollBar();
         vertical.setUnitIncrement(16);
         sp.setBorder(null);
         setSize(1050, 500);
 
-        noMolPanel = new JLabel("No molecules yet");
-        noMolPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
-        noMolPanel.setOpaque(false);
-        noMolPanel.setForeground(Globals.textColor);
-        noMolPanel.setFont(Globals.titleFont);
-
-        JPanel topPanel = new JPanel();
-        topPanel.setOpaque(false);
-        topPanel.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0));
-
-        JButton loadBtn = Globals.createButton("Load Database", Globals.menuFont, 40, 18, 6, e -> {
-            String databasePath = Globals.pref.get("DB_PATH", Globals.parentPath);
-            JFileChooser databaseChooser = new JFileChooser(databasePath);
-            databaseChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
-            databaseChooser.setFileFilter(new FileNameExtensionFilter(".txt input files", "txt"));
-            databaseChooser.setAcceptAllFileFilterUsed(false);
-            databaseChooser.setDialogTitle("Load a predefined dbase.txt");
-            int out = databaseChooser.showOpenDialog(this);
-            if (out == JFileChooser.APPROVE_OPTION) {
-                Globals.pref.put("DB_PATH", databaseChooser.getCurrentDirectory().getAbsolutePath());
-                databaseChooser.setCurrentDirectory(databaseChooser.getCurrentDirectory());
-                loadFile(databaseChooser.getSelectedFile().getAbsolutePath());
-            }
-        });
-        topPanel.add(loadBtn);
-        JButton addBtn = Globals.createButton("Add Molecule", Globals.menuFont, 40, 18, 6, e -> addEmptyMolecule());
-        topPanel.add(addBtn);
-        JButton clearBtn = Globals.createButton("Clear Molecules", Globals.menuFont, 40, 18, 6, e -> {
-            int msg = JOptionPane.showConfirmDialog(this, "Are you sure you want to delete all molecules?");
-            if (msg != JOptionPane.YES_OPTION) return;
-            while (molecules.size() > 0) removeMolecule(0);
-            panel.add(noMolPanel);
-        });
-        topPanel.add(clearBtn);
-        JButton saveBtn = Globals.createButton("Save Database", Globals.menuFont, 40, 18, 6, e -> saveDB(Globals.dbPath));
-        topPanel.add(saveBtn);
-
-        JButton saveAsBtn = Globals.createButton("Save Database As...", Globals.menuFont, 40, 18, 6, e -> {
-            String saveAsPath = Globals.pref.get("SAVE_AS_DB_PATH", Globals.parentPath);
-            JFileChooser fc = new JFileChooser(saveAsPath);
-            fc.setFileSelectionMode(JFileChooser.FILES_ONLY);
-            fc.setFileFilter(new FileNameExtensionFilter(".txt files", "txt"));
-            fc.setAcceptAllFileFilterUsed(false);
-            fc.setDialogTitle("Save database as");
-            fc.setSelectedFile(new File("dbase.txt"));
-            int res = fc.showSaveDialog(this);
-            if (res == JFileChooser.APPROVE_OPTION) {
-                if (!fc.getSelectedFile().toString().endsWith(".txt")) return;
-                try {
-                    if (!fc.getSelectedFile().exists()) fc.getSelectedFile().createNewFile();
-                    Globals.pref.put("SAVE_AS_DB_PATH", fc.getSelectedFile().getAbsolutePath());
-                    saveDB(fc.getSelectedFile().getAbsolutePath());
-                } catch (IOException ignored) {
-                }
-            }
-        });
-        topPanel.add(saveAsBtn);
-
-        errorLabel = new JLabel("", SwingConstants.CENTER);
-        errorLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-        errorLabel.setForeground(Globals.errorColor);
-        errorLabel.setFont(Globals.btnFont);
-        errorLabel.setBorder(BorderFactory.createEmptyBorder(6, 0, 6, 0));
-        
-        setContentPane(fullPanel);
-        fullPanel.add(topPanel);
         fullPanel.add(sp);
-        fullPanel.add(errorLabel);
-        setResizable(false);
+
+        setContentPane(fullPanel);
+//        setResizable(false);
         setLocationRelativeTo(getParent());
-        
-        // Close window on ESC
-        getRootPane().registerKeyboardAction(e -> closeWindow(),
-            KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0),
-            JComponent.WHEN_IN_FOCUSED_WINDOW);
-    }
-    
-    public void setMolecules(List<Molecule> molecules) {
-        while (this.molecules.size() > 0) {
-            removeMolecule(0);
-        }
-        addMolecules(molecules, false);
     }
 
-    void addMolecules(List<Molecule> molecules, boolean scroll) {
-        molecules.forEach(mol -> {
-            if (noMolPanel.getParent() == panel)
-                panel.remove(noMolPanel);
-            this.molecules.add(mol);
-            mol.dbGUI = this;
-            JPanel molPanel = mol.getPanel();
-            panel.add(molPanel);
-            molPanels.add(molPanel);
-        });
-        if (this.molecules.size() == 0)
-            panel.add(noMolPanel);
-        repaint();
-        revalidate();
-        if(scroll) vertical.setValue( vertical.getMaximum() );
-    }
-
-    void addMolecules(List<Molecule> molecules) {
-        addMolecules(molecules, true);
-    }
-
-    void addMolecules(Molecule... molecules) {
-        addMolecules(Arrays.stream(molecules).collect(Collectors.toList()));
+    public List<String> getMoleculeNames() {
+        return molecules.stream().map(mol -> mol.molName).collect(Collectors.toList());
     }
 
     public List<Molecule> getMolecules() {
         return molecules;
     }
 
+    public void addFilter(Predicate<Molecule> pred) {
+        filters.add(pred);
+        filterMols();
+    }
+
+    public void removeFilter(Predicate<Molecule> pred) {
+        filters.remove(pred);
+        filterMols();
+    }
+
+    public void clearFilters() {
+        filters.clear();
+        filterMols();
+    }
+
+    public void setSorter(MoleculeSorter sorter) {
+        this.sorter = sorter;
+        filterMols();
+    }
+
+    public void clearSorter() {
+        sorter = MoleculeSorter.DefaultSorter;
+        filterMols();
+    }
+
+    private void filterMols() {
+        Predicate<Molecule> combinedFilter = filters.stream().reduce(s -> true, Predicate::and);
+        sortedList = molecules.stream()
+                .filter(combinedFilter)
+                .filter((mol) -> mol.molName.contains(currSearch))
+                .sorted(sorter)
+                .collect(Collectors.toList());
+        repaintMols();
+    }
+
+    private void repaintMols() {
+        molPanel.removeAll();
+        sortedList.forEach((mol) -> {
+            JPanel panel = new JPanel();
+            panel.setLayout(new BoxLayout(panel, BoxLayout.X_AXIS));
+
+            JLabel nameLabel = new JLabel(String.format("<html><u>%s</u></html>", mol.molName));
+            nameLabel.setMaximumSize(new Dimension(32, nameLabel.getPreferredSize().height));
+            nameLabel.setForeground(Globals.linkColor);
+            nameLabel.setFont(Globals.menuFont);
+            nameLabel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+            nameLabel.addMouseListener(new MouseAdapter() {
+                @Override
+                public void mouseClicked(MouseEvent e) {
+                    System.out.println(mol.molName);
+                    System.out.println(mol.molName);
+                    MoleculeSubframe.openMolFrame(mol);
+                }
+            });
+
+            panel.add(nameLabel);
+//            panel.add(Box.createRigidArea(new Dimension(10, 0)));
+
+            JPanel trashPanel = new JPanel(new BorderLayout());
+            trashPanel.setOpaque(false);
+            trashPanel.setBorder(BorderFactory.createEmptyBorder(0, 16, 20, 0));
+            trashPanel.setPreferredSize(new Dimension(48, (int) panel.getPreferredSize().getHeight()));
+
+            JLabel trashIcon = new JLabel("\uf00d");
+            trashIcon.setFont(Globals.iconFont);
+            trashIcon.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+            trashIcon.setForeground(Globals.textColor);
+            trashIcon.setFocusable(true);
+            trashIcon.addMouseListener(new MouseAdapter() {
+                public void mouseClicked(MouseEvent e) {
+                    if (e.getButton() != MouseEvent.BUTTON1) return;
+                    int msg = JOptionPane.showConfirmDialog(DatabaseGUI.this, "Are you sure you want to delete this molecule?");
+                    if (msg == JOptionPane.YES_OPTION) {
+                        // remove molecule
+                        removeMolecule(mol);
+                    }
+                }
+            });
+            trashIcon.setToolTipText("Remove " + mol.molName);
+            trashPanel.add(trashIcon, BorderLayout.SOUTH);
+
+            panel.add(trashPanel);
+            molPanel.add(panel);
+        });
+        pack();
+    }
+
+    private void setMolecules(List<Molecule> molecules) {
+        this.molecules.clear();
+        this.molecules.addAll(molecules);
+        filterMols();
+    }
+
+    private void addMolecules(List<Molecule> molecules) {
+        this.molecules.addAll(molecules);
+        filterMols();
+    }
+
+    public void removeMolecule(Molecule mol) {
+        molecules.remove(mol);
+        filterMols();
+    }
+
+    public void clearMolecules() {
+        molecules.clear();
+        filterMols();
+    }
+
     public Molecule getMolecule(String name) {
         return molecules.stream().filter(mol -> mol.molName.equals(name)).findFirst().orElse(null);
     }
 
-    public void addEmptyMolecule() {
-        addMolecules(new Molecule());
-    }
-
-    public void removeMolecule(int index) {
-        molecules.remove(index);
-        JPanel removed = molPanels.remove(index);
-        panel.remove(removed);
-        if (molecules.size() == 0)
-            panel.add(noMolPanel);
-        panel.repaint();
-        panel.revalidate();
-    }
-
-    public void removeMolecule(Molecule molecule) {
-        removeMolecule(molecules.indexOf(molecule));
-    }
-
-    private void closeWindow() {
-        int msg = JOptionPane.showOptionDialog(this,
-                "Do you want to save your current database?",
-                "Save Settings?", 
-                JOptionPane.YES_NO_OPTION, 
-                JOptionPane.QUESTION_MESSAGE,
-                null,
-                null,
-                null);
-        if (msg == JOptionPane.YES_OPTION) {
-            saveDB(Globals.dbPath);
-        }
-        dispose();
-    }
-
-    public void loadFile(String pathName, boolean scroll, boolean override) {
+    public void loadFile(String pathName, boolean ignored, boolean override) {
         try {
             File f = new File(pathName);
             List<Molecule> mols = Molecule.createMolecules(new Scanner(f));
             if (override) setMolecules(mols);
-            else addMolecules(mols, scroll);
+            else addMolecules(mols);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -225,36 +199,6 @@ public class DatabaseGUI extends JFrame {
 
     public void loadFile(String pathName) {
         loadFile(pathName, true, false);
-    }
-
-    public void saveDB(String path) {
-        // check that there is at least one molecule
-        if (molecules.size() == 0) {
-            errorLabel.setText("Error! A database must have at least one molecule!");
-            return;
-        }
-
-        // if any molecule names are empty, don't save
-        if (molecules.stream().anyMatch(mol -> mol.molName.equals(""))) {
-            errorLabel.setText("Error! Molecule names must not be empty!");
-            return;
-        }
-
-        // if any molecule names are repeated, don't save
-        if (molecules.stream().map(mol -> mol.molName).anyMatch(mol -> Collections.frequency(molecules.stream().map(m -> m.molName).collect(Collectors.toList()), mol) >1)) {
-            errorLabel.setText("Error! Molecule names must be unique!");
-            return;
-        }
-
-        errorLabel.setText("");
-
-        try (FileWriter writer = new FileWriter(path)) {
-            String str = toFile();
-            writer.write(str);
-            listeners.forEach(SaveListener::onSave);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
     }
 
     public void addSaveListener(SaveListener listener) {
@@ -265,8 +209,35 @@ public class DatabaseGUI extends JFrame {
         this.listeners.remove(listener);
     }
 
-    public List<String> getMoleculeNames() {
-        return molecules.stream().map(mol -> mol.molName).collect(Collectors.toList());
+    public void saveDB(String path) {
+        // check that there is at least one molecule
+        if (molecules.size() == 0) {
+//            errorLabel.setText("Error! A database must have at least one molecule!");
+            return;
+        }
+
+        // if any molecule names are empty, don't save
+        if (molecules.stream().anyMatch(mol -> mol.molName.equals(""))) {
+//            errorLabel.setText("Error! Molecule names must not be empty!");
+            return;
+        }
+
+        // if any molecule names are repeated, don't save
+        if (molecules.stream().map(mol -> mol.molName).anyMatch(mol -> Collections.frequency(molecules.stream().map(m -> m.molName).collect(Collectors.toList()), mol) >1)) {
+//            errorLabel.setText("Error! Molecule names must be unique!");
+            return;
+        }
+
+//        errorLabel.setText("");
+
+        try (FileWriter writer = new FileWriter(path)) {
+            String str = toFile();
+            writer.write(str);
+            listeners.forEach(SaveListener::onSave);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        repaintMols();
     }
 
     public String toFile() {

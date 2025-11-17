@@ -901,6 +901,7 @@ public class StartGUI extends JFrame {
 
         List<String> s = DatabaseGUI.getInstance().getMoleculeNames().stream()
                 .filter(name -> !usedMolNames.contains(name) || name.equals(selected)).collect(Collectors.toList());
+        if (!s.contains(selected)) usedMolNames.remove(selected);
         if (s.size() == 0) {
             molPanel.remove(cb.getParent().getParent());
             molPanel.repaint();
