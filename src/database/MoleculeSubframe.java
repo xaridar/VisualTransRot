@@ -48,7 +48,6 @@ public class MoleculeSubframe extends JFrame {
         setResizable(false);
         setLocationRelativeTo(null);
         setVisible(true);
-        setAlwaysOnTop(true);
 
         setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
         addWindowListener(new WindowAdapter() {

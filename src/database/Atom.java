@@ -1,9 +1,7 @@
 package database;
 
 import java.awt.*;
-import java.awt.event.KeyAdapter;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 import java.math.BigDecimal;
 import java.text.DecimalFormat;
 import java.util.Comparator;
@@ -13,6 +11,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import javax.swing.plaf.metal.MetalComboBoxButton;
 import javax.swing.plaf.metal.MetalComboBoxIcon;
 import javax.swing.plaf.metal.MetalComboBoxUI;
@@ -74,7 +73,7 @@ public class Atom {
         gbc.fill = GridBagConstraints.NONE;
 
         panel.setOpaque(false);
-        panel.setBorder(BorderFactory.createEmptyBorder(3, 5, 0, 5));
+        panel.setBorder(BorderFactory.createEmptyBorder(4, 5, 1, 5));
         
         // dropdown - all elements are
         // available as dropdown options, or massless elements can be customized
@@ -330,7 +329,7 @@ public class Atom {
         JLabel trashIcon = new JLabel("\uf00d");
         trashIcon.setFont(Globals.iconFont);
         trashIcon.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        trashIcon.setForeground(Globals.textColor);
+        trashIcon.setForeground(Globals.errorColor);
         trashIcon.setFocusable(true);
         trashIcon.addMouseListener(new MouseAdapter() {
             public void mouseClicked(MouseEvent e) {
@@ -345,29 +344,21 @@ public class Atom {
         retPanel.setLayout(new BoxLayout(retPanel, BoxLayout.Y_AXIS));
         retPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
         retPanel.setOpaque(false);
-        JLabel cdLabel = new JLabel("<html><u>Calculate C & D</u></html>");
-        cdLabel.setFont(Globals.btnFontSmaller);
-        cdLabel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        cdLabel.setBorder(BorderFactory.createEmptyBorder(4, 0, 4, 0));
-        cdLabel.setForeground(Globals.linkColor);
-        cdLabel.setFocusable(true);
-        cdLabel.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                SigmaEpsilonDialog sed = new SigmaEpsilonDialog();
-                int result = JOptionPane.showConfirmDialog(retPanel.getParent(), sed, "Calculate C & D", JOptionPane.OK_CANCEL_OPTION);
-                if (result == JOptionPane.YES_OPTION) {
-                    double sigmaSix = Math.pow(sed.getSigma(), 6);
-                    double c = 4 * sed.getEpsilon() * sigmaSix;
-                    double d = c * sigmaSix;
 
-                    cField.setValue(new BigDecimal(c));
-                    dField.setValue(new BigDecimal(d));
-                }
+        JButton cdBtn = Globals.createLinkButton("Calculate C & D", Globals.btnFontSmaller, 5, 3, true, e -> {
+            SigmaEpsilonDialog sed = new SigmaEpsilonDialog();
+            int result = JOptionPane.showConfirmDialog(retPanel.getParent(), sed, "Calculate C & D", JOptionPane.OK_CANCEL_OPTION);
+            if (result == JOptionPane.YES_OPTION) {
+                double sigmaSix = Math.pow(sed.getSigma(), 6);
+                double c = 4 * sed.getEpsilon() * sigmaSix;
+                double d = c * sigmaSix;
+
+                cField.setValue(new BigDecimal(c));
+                dField.setValue(new BigDecimal(d));
             }
         });
         retPanel.add(panel);
-        retPanel.add(cdLabel);
+        retPanel.add(cdBtn);
 
         return retPanel;
     }

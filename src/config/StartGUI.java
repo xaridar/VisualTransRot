@@ -361,50 +361,37 @@ public class StartGUI extends JFrame {
                     settingPanel.add(newPanel);
                     settingPanel.setAlignmentY(Component.CENTER_ALIGNMENT);
 
-                    fileButtonInp = new JButton("Choose Input.xyz...");
-                    fileButtonInp.setEnabled(checkBox.isSelected());
-                    fileButtonInp.setBackground(Globals.bgColorDark);
-                    fileButtonInp.setUI(new MetalButtonUI() {
-                        @Override
-                        protected Color getDisabledTextColor() {
-                            return Globals.textColorDisabled;
-                        }
-                    });
-                    fileButtonInp.setForeground(Globals.linkColor);
-                    fileButtonInp.setFont(Globals.btnFontSmall);
-                    fileButtonInp.setAlignmentX(Component.CENTER_ALIGNMENT);
-                    fileButtonInp.setBorder(BorderFactory.createCompoundBorder(
-                            BorderFactory.createLineBorder(Globals.menuBgColor),
-                            BorderFactory.createEmptyBorder(3, 5, 3, 5)));
-                    fileButtonInp.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-                    fileButtonInp.setUI(new MetalButtonUI() {
-                        protected Color getSelectColor() {
-                            return Globals.bgColorDark;
-                        }
-
-                        protected Color getFocusColor() {
-                            return Globals.bgColorDark;
-                        }
-                    });
-                    fileButtonInp.addMouseListener(new MouseAdapter() {
-                        @Override
-                        public void mousePressed(MouseEvent e) {
-                            if (e.getButton() != MouseEvent.BUTTON1) return;
-                            fileButtonInp.setForeground(Globals.linkColorAlt);
-                        }
-
-                        @Override
-                        public void mouseReleased(MouseEvent e) {
-                            fileButtonInp.setForeground(Globals.linkColor);
-                        }
-                    });
-
                     String inputPath = Globals.pref.get("INPUT_PATH", Globals.parentPath);
                     JFileChooser fileChooser = new JFileChooser(inputPath);
                     fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
                     fileChooser.setFileFilter(new FileNameExtensionFilter(".xyz input files", "xyz"));
                     fileChooser.setAcceptAllFileFilterUsed(false);
                     fileChooser.setDialogTitle("Choose an Input.xyz");
+
+                    fileButtonInp = Globals.createTextButton(
+                            "Choose Input.xyz...", false, true, Globals.bgColorDark, Globals.btnFontSmall, 5, 3, true, e -> {
+                                setError("");
+                                int out = fileChooser.showOpenDialog(StartGUI.this);
+                                Globals.pref.put("INPUT_PATH", fileChooser.getCurrentDirectory().getAbsolutePath());
+                                fileChooser.setCurrentDirectory(fileChooser.getCurrentDirectory());
+                                if (out == JFileChooser.APPROVE_OPTION) {
+                                    fileNameInp.setText(fileChooser.getSelectedFile().getName());
+                                    fileNameInp.setVisible(true);
+                                    inputFile = fileChooser.getSelectedFile().getAbsolutePath();
+                                } else {
+                                    fileNameInp.setText("");
+                                    fileNameInp.setVisible(false);
+                                    inputFile = "";
+                                }
+                            }
+                    );
+                    fileButtonInp.setEnabled(checkBox.isSelected());
+                    fileButtonInp.setUI(new MetalButtonUI() {
+                        @Override
+                        protected Color getDisabledTextColor() {
+                            return Globals.textColorDisabled;
+                        }
+                    });
                     settingPanel.add(fileButtonInp);
 
                     fileNameInp = new JLabel();
@@ -421,21 +408,6 @@ public class StartGUI extends JFrame {
                         }
                     });
                     settingPanel.add(fileNameInp);
-                    fileButtonInp.addActionListener(e -> {
-                        setError("");
-                        int out = fileChooser.showOpenDialog(StartGUI.this);
-                        Globals.pref.put("INPUT_PATH", fileChooser.getCurrentDirectory().getAbsolutePath());
-                        fileChooser.setCurrentDirectory(fileChooser.getCurrentDirectory());
-                        if (out == JFileChooser.APPROVE_OPTION) {
-                            fileNameInp.setText(fileChooser.getSelectedFile().getName());
-                            fileNameInp.setVisible(true);
-                            inputFile = fileChooser.getSelectedFile().getAbsolutePath();
-                        } else {
-                            fileNameInp.setText("");
-                            fileNameInp.setVisible(false);
-                            inputFile = "";
-                        }
-                    });
 
                     checkBox.addItemListener(e -> {
                         setError("");
@@ -461,50 +433,37 @@ public class StartGUI extends JFrame {
                     settingPanel.add(newPanel);
                     settingPanel.setAlignmentY(Component.CENTER_ALIGNMENT);
 
-                    fileButtonParams = new JButton("Choose interaction_params.txt...");
-                    fileButtonParams.setEnabled(checkBox.isSelected());
-                    fileButtonParams.setBackground(Globals.bgColorDark);
-                    fileButtonParams.setUI(new MetalButtonUI() {
-                        @Override
-                        protected Color getDisabledTextColor() {
-                            return Globals.textColorDisabled;
-                        }
-                    });
-                    fileButtonParams.setForeground(Globals.linkColor);
-                    fileButtonParams.setFont(Globals.btnFontSmall);
-                    fileButtonParams.setAlignmentX(Component.CENTER_ALIGNMENT);
-                    fileButtonParams.setBorder(BorderFactory.createCompoundBorder(
-                            BorderFactory.createLineBorder(Globals.menuBgColor),
-                            BorderFactory.createEmptyBorder(3, 5, 3, 5)));
-                    fileButtonParams.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-                    fileButtonParams.setUI(new MetalButtonUI() {
-                        protected Color getSelectColor() {
-                            return Globals.bgColorDark;
-                        }
-
-                        protected Color getFocusColor() {
-                            return Globals.bgColorDark;
-                        }
-                    });
-                    fileButtonParams.addMouseListener(new MouseAdapter() {
-                        @Override
-                        public void mousePressed(MouseEvent e) {
-                            if (e.getButton() != MouseEvent.BUTTON1) return;
-                            fileButtonParams.setForeground(Globals.linkColorAlt);
-                        }
-
-                        @Override
-                        public void mouseReleased(MouseEvent e) {
-                            fileButtonParams.setForeground(Globals.linkColor);
-                        }
-                    });
-
                     String paramsPath = Globals.pref.get("PARAMS_PATH", Globals.parentPath);
                     JFileChooser fileChooser = new JFileChooser(paramsPath);
                     fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
                     fileChooser.setFileFilter(new FileNameExtensionFilter(".txt input files", "txt"));
                     fileChooser.setAcceptAllFileFilterUsed(false);
                     fileChooser.setDialogTitle("Choose an interaction_parameters.txt");
+
+                    fileButtonParams = Globals.createTextButton(
+                            "Choose interaction_params.txt...", false, true, Globals.bgColorDark, Globals.btnFontSmall, 5, 3, true, e -> {
+                                setError("");
+                                int out = fileChooser.showOpenDialog(StartGUI.this);
+                                Globals.pref.put("PARAMS_PATH", fileChooser.getCurrentDirectory().getAbsolutePath());
+                                fileChooser.setCurrentDirectory(fileChooser.getCurrentDirectory());
+                                if (out == JFileChooser.APPROVE_OPTION) {
+                                    fileNameParams.setText(fileChooser.getSelectedFile().getName());
+                                    fileNameParams.setVisible(true);
+                                    paramsFile = fileChooser.getSelectedFile().getAbsolutePath();
+                                } else {
+                                    fileNameParams.setText("");
+                                    fileNameParams.setVisible(false);
+                                    paramsFile = "";
+                                }
+                            }
+                    );
+                    fileButtonParams.setEnabled(checkBox.isSelected());
+                    fileButtonParams.setUI(new MetalButtonUI() {
+                        @Override
+                        protected Color getDisabledTextColor() {
+                            return Globals.textColorDisabled;
+                        }
+                    });
                     settingPanel.add(fileButtonParams);
 
                     fileNameParams = new JLabel();
@@ -521,21 +480,6 @@ public class StartGUI extends JFrame {
                         }
                     });
                     settingPanel.add(fileNameParams);
-                    fileButtonParams.addActionListener(e -> {
-                        setError("");
-                        int out = fileChooser.showOpenDialog(StartGUI.this);
-                        Globals.pref.put("PARAMS_PATH", fileChooser.getCurrentDirectory().getAbsolutePath());
-                        fileChooser.setCurrentDirectory(fileChooser.getCurrentDirectory());
-                        if (out == JFileChooser.APPROVE_OPTION) {
-                            fileNameParams.setText(fileChooser.getSelectedFile().getName());
-                            fileNameParams.setVisible(true);
-                            paramsFile = fileChooser.getSelectedFile().getAbsolutePath();
-                        } else {
-                            fileNameParams.setText("");
-                            fileNameParams.setVisible(false);
-                            paramsFile = "";
-                        }
-                    });
 
                     checkBox.addItemListener(e -> {
                         setError("");

@@ -1,23 +1,21 @@
 package database;
 
-import config.StartGUI;
 import util.Globals;
 import util.SaveListener;
 
 import javax.swing.*;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import java.awt.*;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.*;
 import java.util.List;
-import java.util.function.BiFunction;
-import java.util.function.Function;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class DatabaseGUI extends JFrame {
 
@@ -45,25 +43,130 @@ public class DatabaseGUI extends JFrame {
 
         JPanel fullPanel = new JPanel();
         fullPanel.setBackground(Globals.bgColor);
-        fullPanel.setLayout(new BoxLayout(fullPanel, BoxLayout.Y_AXIS));
+        fullPanel.setLayout(new BorderLayout());
 
+
+        JPanel topPanel = new JPanel();
+        topPanel.setLayout(new BoxLayout(topPanel, BoxLayout.Y_AXIS));
+        topPanel.setOpaque(false);
+        fullPanel.add(topPanel, BorderLayout.NORTH);
+
+        JPanel searchPanel = new JPanel();
+        searchPanel.setBorder(BorderFactory.createEmptyBorder(10, 20, 8, 20));
+        searchPanel.setOpaque(false);
+        topPanel.add(searchPanel);
+
+        JTextField searchField = new JTextField("Search for molecules...", 30);
+        searchField.setForeground(Globals.textColorDisabled);
+        searchField.setCaretPosition(0);
+        searchField.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mousePressed(MouseEvent e) {
+                if (searchField.getForeground() == Globals.textColorDisabled) {
+                    searchField.setCaretPosition(0);
+                }
+            }
+
+            @Override
+            public void mouseReleased(MouseEvent e) {
+                if (searchField.getForeground() == Globals.textColorDisabled) {
+                    searchField.setCaretPosition(0);
+                }
+            }
+        });
+        AtomicBoolean suppressListener = new AtomicBoolean(false);
+        searchField.getDocument().addDocumentListener(new DocumentListener() {
+            @Override
+            public void insertUpdate(DocumentEvent e) {
+                if (suppressListener.get()) return;
+                if (currSearch.equals("")) {
+                    // changes from placeholder to user input
+                    int len = e.getLength();
+                    int offset = e.getOffset();
+                    String startSearch = searchField.getText().substring(offset, offset + len);
+
+                    SwingUtilities.invokeLater(() -> {
+                        searchField.setForeground(Globals.textColor);
+                        suppressListener.set(true);
+                        searchField.setText(startSearch);
+                        suppressListener.set(false);
+                        searchField.setCaretPosition(startSearch.length());
+                        setSearch(startSearch);
+                    });
+                } else {
+                    // otherwise, simply set the search
+                    setSearch(searchField.getText());
+                }
+            }
+
+            @Override
+            public void removeUpdate(DocumentEvent e) {
+                if (suppressListener.get()) return;
+                if (searchField.getText().equals("")) {
+                    // replaces placeholder
+                    SwingUtilities.invokeLater(() -> {
+                        searchField.setForeground(Globals.textColorDisabled);
+                        suppressListener.set(true);
+                        searchField.setText("Search for molecules...");
+                        suppressListener.set(false);
+                        searchField.setCaretPosition(0);
+                        setSearch("");
+                    });
+                } else setSearch(searchField.getText());
+            }
+
+            @Override
+            public void changedUpdate(DocumentEvent e) {
+
+            }
+        });
+        searchField.setFont(Globals.btnFont);
+        searchField.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(Globals.textColor),
+                BorderFactory.createEmptyBorder(5, 8, 5, 8)
+        ));
+        searchPanel.add(searchField);
+
+        JPanel filtersPanel = new JPanel();
+        filtersPanel.setLayout(new BoxLayout(filtersPanel, BoxLayout.X_AXIS));
+        topPanel.add(filtersPanel);
+
+        JButton defSort = Globals.createButton("Default Sorting", Globals.btnFont, 0, 5, 3, x -> setSorter(MoleculeSorter.DefaultSorter));
+        JButton alphaSort = Globals.createButton("A -> Z", Globals.btnFont, 0, 5, 3, x -> setSorter(MoleculeSorter.AlphaSorter));
+        JButton revAlphaSort = Globals.createButton("Z -> A", Globals.btnFont, 0, 5, 3, x -> setSorter(MoleculeSorter.ReverseAlphaSorter));
+
+        filtersPanel.add(defSort);
+        filtersPanel.add(alphaSort);
+        filtersPanel.add(revAlphaSort);
 
         molPanel = new JPanel();
+        molPanel.setBackground(Globals.bgColor);
         molPanel.setLayout(new BoxLayout(molPanel, BoxLayout.Y_AXIS));
+        molPanel.setBorder(BorderFactory.createEmptyBorder(15, 20, 25, 20));
         repaintMols();
 
         JScrollPane sp = new JScrollPane(molPanel, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
                 JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         JScrollBar vertical = sp.getVerticalScrollBar();
+        sp.setOpaque(false);
         vertical.setUnitIncrement(16);
         sp.setBorder(null);
-        setSize(1050, 500);
+        setSize(650, 350);
 
-        fullPanel.add(sp);
+        fullPanel.add(sp, BorderLayout.CENTER);
 
         setContentPane(fullPanel);
-//        setResizable(false);
+        setResizable(false);
         setLocationRelativeTo(getParent());
+
+        // Close window on ESC
+        getRootPane().registerKeyboardAction(e -> closeWindow(),
+                KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0),
+                JComponent.WHEN_IN_FOCUSED_WINDOW);
+    }
+
+    void closeWindow() {
+        dispose();
     }
 
     public List<String> getMoleculeNames() {
@@ -99,11 +202,17 @@ public class DatabaseGUI extends JFrame {
         filterMols();
     }
 
+    public void setSearch(String search) {
+        this.currSearch = search;
+        System.out.println(search);
+        filterMols();
+    }
+
     private void filterMols() {
         Predicate<Molecule> combinedFilter = filters.stream().reduce(s -> true, Predicate::and);
         sortedList = molecules.stream()
                 .filter(combinedFilter)
-                .filter((mol) -> mol.molName.contains(currSearch))
+                .filter((mol) -> mol.molName.toLowerCase(Locale.ROOT).contains(currSearch.toLowerCase(Locale.ROOT)))
                 .sorted(sorter)
                 .collect(Collectors.toList());
         repaintMols();
@@ -114,33 +223,23 @@ public class DatabaseGUI extends JFrame {
         sortedList.forEach((mol) -> {
             JPanel panel = new JPanel();
             panel.setLayout(new BoxLayout(panel, BoxLayout.X_AXIS));
+            panel.setBorder(BorderFactory.createEmptyBorder(8, 0, 8, 0));
+            panel.setOpaque(false);
 
-            JLabel nameLabel = new JLabel(String.format("<html><u>%s</u></html>", mol.molName));
-            nameLabel.setMaximumSize(new Dimension(32, nameLabel.getPreferredSize().height));
-            nameLabel.setForeground(Globals.linkColor);
-            nameLabel.setFont(Globals.menuFont);
-            nameLabel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-            nameLabel.addMouseListener(new MouseAdapter() {
-                @Override
-                public void mouseClicked(MouseEvent e) {
-                    System.out.println(mol.molName);
-                    System.out.println(mol.molName);
-                    MoleculeSubframe.openMolFrame(mol);
-                }
+            JButton nameBtn = Globals.createLinkButton(mol.molName, Globals.btnFont, 4, 1, true, e -> {
+                MoleculeSubframe.openMolFrame(mol);
             });
+            nameBtn.setAlignmentY(Component.CENTER_ALIGNMENT);
 
-            panel.add(nameLabel);
-//            panel.add(Box.createRigidArea(new Dimension(10, 0)));
-
-            JPanel trashPanel = new JPanel(new BorderLayout());
-            trashPanel.setOpaque(false);
-            trashPanel.setBorder(BorderFactory.createEmptyBorder(0, 16, 20, 0));
-            trashPanel.setPreferredSize(new Dimension(48, (int) panel.getPreferredSize().getHeight()));
+            panel.add(Box.createHorizontalGlue());
+            panel.add(nameBtn);
+            panel.add(Box.createHorizontalStrut(20));
 
             JLabel trashIcon = new JLabel("\uf00d");
             trashIcon.setFont(Globals.iconFont);
+            trashIcon.setAlignmentY(Component.CENTER_ALIGNMENT);
             trashIcon.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-            trashIcon.setForeground(Globals.textColor);
+            trashIcon.setForeground(Globals.errorColor);
             trashIcon.setFocusable(true);
             trashIcon.addMouseListener(new MouseAdapter() {
                 public void mouseClicked(MouseEvent e) {
@@ -152,13 +251,17 @@ public class DatabaseGUI extends JFrame {
                     }
                 }
             });
+            trashIcon.setMaximumSize(trashIcon.getPreferredSize());
             trashIcon.setToolTipText("Remove " + mol.molName);
-            trashPanel.add(trashIcon, BorderLayout.SOUTH);
 
-            panel.add(trashPanel);
+            panel.add(trashIcon);
+            panel.add(Box.createHorizontalGlue());
+            panel.setMaximumSize(panel.getPreferredSize());
             molPanel.add(panel);
         });
-        pack();
+        molPanel.add(Box.createVerticalGlue());
+        getContentPane().revalidate();
+        getContentPane().repaint();
     }
 
     private void setMolecules(List<Molecule> molecules) {
