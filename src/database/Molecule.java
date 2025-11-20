@@ -1,10 +1,7 @@
 package database;
 
 import java.awt.*;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 import java.math.BigDecimal;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
@@ -126,7 +123,6 @@ public class Molecule {
         scrollablePanel.revalidate();
         scrollablePanel.repaint();
         SwingUtilities.getWindowAncestor(scrollablePanel).pack();
-        SwingUtilities.getWindowAncestor(scrollablePanel).setLocationRelativeTo(null);
         SwingUtilities.invokeLater(() -> vScrollbar.setValue(vScrollbar.getMaximum()));
     }
 
@@ -156,9 +152,77 @@ public class Molecule {
         removeAtom(index);
     }
 
-    public void saveMolecule() {
+    public boolean saveMolecule() {
+        // Errors if name is empty
+        if (molName.equals("")) {
+            JOptionPane.showMessageDialog(SwingUtilities.getWindowAncestor(panel), "Error: Every molecule in the database must have a name!",
+                    "Name Undefined", JOptionPane.ERROR_MESSAGE, null);
+            return false;
+        }
+
+        // If name is a copy of another existing molecule, some options are presented to the user:
+        // - **Overwrite** - The original molecule with the same name is deleted in favor of the new one.
+        // - **Keep Both** - Renames the new molecule by appending a number at the end (similarly to Windows OS in the case of file name repeats).
+        // - **Swap Names** - Saves the old molecule with the current molecule's previous name, using the new name for the updated molecule. Only available if this molecule has a previous name.
+        // - **Cancel** - Cancels the save and allows the user to rename this molecule to avoid conflicts.
+        // Closing the pop-up dialog has the same effect as selecting "Cancel"
+        List<String> allOtherNames = DatabaseGUI.getInstance().getMolecules().stream().filter(mol -> mol != this).map(mol -> mol.molName).collect(Collectors.toList());
+        if (allOtherNames.contains(molName)) {
+            boolean canSwap = savedState != null && !savedState.molName.equals(molName);
+            String[] options = canSwap ? new String[]{
+                    "Overwrite",
+                    "Keep Both",
+                    "Swap Names",
+                    "Cancel"
+            } : new String[]{
+                    "Overwrite",
+                    "Keep Both",
+                    "Cancel"
+            };
+            int opt = JOptionPane.showOptionDialog(SwingUtilities.getWindowAncestor(panel),
+                    "<html>You are trying to save a molecule using a name that already exists in the database. What would you like to do?<ol>" +
+                            "<li>Overwrite - The original molecule with the same name is deleted in favor of the new one.</li>" +
+                            "<li>Keep Both - Automatically rename the new molecule name using a numeric suffix.</li>" +
+                            (canSwap ? "<li>Swap Names - Swap the names of the old molecule and this one.</li>" : "") +
+                            "</ol></html>",
+                    "Duplicate Name",
+                    JOptionPane.DEFAULT_OPTION,
+                    JOptionPane.QUESTION_MESSAGE,
+                    null,
+                    options,
+                    "Cancel"
+            );
+            if (opt == -1) return false;
+
+            Molecule other = DatabaseGUI.getInstance().getMolecules().stream().filter(mol -> mol.molName.equals(molName) && mol != this).findFirst().get();
+            String selection = options[opt];
+            switch (selection) {
+                case "Overwrite":
+                    DatabaseGUI.getInstance().removeMolecule(other);
+                    break;
+                case "Keep Both":
+                    boolean exists = true;
+                    String newName = molName;
+                    int i = 1;
+                    while (exists) {
+                        newName = molName + "_" + i;
+                        if (DatabaseGUI.getInstance().getMolecule(newName) == null) exists = false;
+                        else i++;
+                    }
+                    molName = newName;
+                    nameField.setText(molName);
+                    break;
+                case "Swap Names":
+                    other.molName = savedState.molName;
+                    break;
+                case "Cancel":
+                    return false;
+            }
+        }
         SwingUtilities.invokeLater(() -> changed = false);
         savedState = copy();
+        DatabaseGUI.getInstance().saveDB(Globals.dbPath);
+        return true;
     }
 
     private Molecule copy() {
@@ -215,7 +279,7 @@ public class Molecule {
                 newString.insert(offset, string);
                 if (isValid(newString.toString())) {
                     fb.insertString(offset, string, attr);
-                    molName = newString.toString();
+                    molName = newString.toString().strip();
                     changed = true;
                 } else Toolkit.getDefaultToolkit().beep();
             }
@@ -226,7 +290,7 @@ public class Molecule {
                 newString.delete(offset, offset + length);
                 if (isValid(newString.toString())) {
                     fb.remove(offset, length);
-                    molName = newString.toString();
+                    molName = newString.toString().strip();
                     changed = true;
                 } else Toolkit.getDefaultToolkit().beep();
             }
@@ -238,13 +302,13 @@ public class Molecule {
                 newString.replace(offset, offset + length, text);
                 if (isValid(newString.toString())) {
                     fb.replace(offset, length, text, attrs);
-                    molName = newString.toString();
+                    molName = newString.toString().strip();
                     changed = true;
                 } else Toolkit.getDefaultToolkit().beep();
             }
 
             boolean isValid(String s) {
-                return s.matches("^(\\S+\\s?)+$");
+                return s.matches("^\\s?(\\S+\\s?)*$");
             }
         });
         namePanel.add(nameField);
@@ -353,10 +417,10 @@ public class Molecule {
         editPanel.setOpaque(false);
         editPanel.setBorder(BorderFactory.createEmptyBorder(8, 75, 0, 55));
 
-        // Add atom
-        JButton addBtn = Globals.createButton("Add Atom", Globals.menuFont, 40, 18, 6, e -> addEmptyAtom());
-        JButton resetBtn = Globals.createButton("Reset to Saved Molecule", Globals.menuFont, 40, 18, 6, e -> resetMol());
-        JButton saveBtn = Globals.createButton("Save Molecule", Globals.menuFont, 40, 18, 6, e -> saveMolecule());
+        // Molecule buttons
+        JButton addBtn = Globals.createButton("Add Atom (Ctrl+N)", Globals.menuFont, 40, 18, 6, e -> addEmptyAtom());
+        JButton resetBtn = Globals.createButton("Reset to Saved Molecule (Ctrl+R)", Globals.menuFont, 40, 18, 6, e -> resetMol());
+        JButton saveBtn = Globals.createButton("Save Molecule (Ctrl+S)", Globals.menuFont, 40, 18, 6, e -> saveMolecule());
 
         editPanel.add(Box.createHorizontalGlue());
         editPanel.add(addBtn);

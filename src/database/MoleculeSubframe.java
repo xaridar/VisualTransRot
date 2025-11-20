@@ -4,6 +4,7 @@ import util.Globals;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
@@ -56,6 +57,18 @@ public class MoleculeSubframe extends JFrame {
                 closeWindow();
             }
         });
+
+        // Keybinds
+        getRootPane().registerKeyboardAction(e -> mol.addEmptyAtom(),
+                KeyStroke.getKeyStroke(KeyEvent.VK_N, InputEvent.CTRL_DOWN_MASK),
+                JComponent.WHEN_IN_FOCUSED_WINDOW);
+        getRootPane().registerKeyboardAction(e -> mol.resetMol(),
+                KeyStroke.getKeyStroke(KeyEvent.VK_R, InputEvent.CTRL_DOWN_MASK),
+                JComponent.WHEN_IN_FOCUSED_WINDOW);
+        getRootPane().registerKeyboardAction(e -> mol.saveMolecule(),
+                KeyStroke.getKeyStroke(KeyEvent.VK_S, InputEvent.CTRL_DOWN_MASK),
+                JComponent.WHEN_IN_FOCUSED_WINDOW);
+
         // Close window on ESC
         getRootPane().registerKeyboardAction(e -> closeWindow(),
                 KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0),
@@ -73,13 +86,12 @@ public class MoleculeSubframe extends JFrame {
                     null,
                     null);
             if (msg == JOptionPane.YES_OPTION) {
-                mol.saveMolecule();
+                if (!mol.saveMolecule()) return;
             } else if (msg == JOptionPane.NO_OPTION) {
                 mol.resetMol();
             } else return;
         }
         molFrames.remove(mol);
         dispose();
-        DatabaseGUI.getInstance().saveDB(Globals.dbPath);
     }
 }

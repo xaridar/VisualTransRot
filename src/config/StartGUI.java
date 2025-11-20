@@ -790,7 +790,7 @@ public class StartGUI extends JFrame {
         menuBar.setBorderPainted(false);
         JMenu fileMenu = createMenuOption("File", KeyEvent.VK_F,
                 new MenuOption("Edit Database", e -> {
-                    DatabaseGUI.getInstance().loadFile(Globals.dbPath, false, true);
+                    DatabaseGUI.getInstance().loadFile(Globals.dbPath, true);
                     DatabaseGUI.getInstance().setVisible(true);
                 }, KeyEvent.VK_D, 5),
                 new MenuOption("Load config.txt", e ->

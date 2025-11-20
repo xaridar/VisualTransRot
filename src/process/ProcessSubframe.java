@@ -274,20 +274,7 @@ public class ProcessSubframe extends JFrame {
         endPanel = new JPanel();
         if (ps.getStatus() == ProcessStruct.ProcessStatus.ALIVE) {
             endPanel.setBackground(Globals.menuBgColorLight);
-            JLabel endLabel = new JLabel("<html><u>End Process</u></html>", SwingConstants.CENTER);
-            endLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-            endLabel.setForeground(Globals.errorColor);
-            endLabel.setBorder(BorderFactory.createEmptyBorder(8, 0, 8, 0));
-            endLabel.setFont(Globals.btnFont);
-            endLabel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-            endLabel.setFocusable(true);
-            endLabel.setMaximumSize(new Dimension(endLabel.getPreferredSize().width, endLabel.getHeight()));
-            endLabel.addMouseListener(new MouseAdapter() {
-                @Override
-                public void mouseClicked(MouseEvent e) {
-                    ps.destroyIfAlive();
-                }
-            });
+            JButton endLabel = Globals.createLinkButton("End Process", Globals.btnFont, 4, 8, true, Globals.errorColor, e -> ps.destroyIfAlive());
 
             endPanel.add(endLabel);
             contentPane.add(endPanel);

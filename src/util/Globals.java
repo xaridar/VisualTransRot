@@ -114,6 +114,7 @@ public class Globals {
     public static Preferences pref;
 
     public static Font titleFont = new Font(Font.MONOSPACED, Font.BOLD, 64);
+    public static Font titleFontSmall = new Font(Font.MONOSPACED, Font.BOLD, 40);
     public static Font btnFont = new Font(Font.MONOSPACED, Font.BOLD, 18);
     public static Font btnFontSmall = new Font(Font.MONOSPACED, Font.BOLD, 12);
     public static Font btnFontSmaller = new Font(Font.MONOSPACED, Font.BOLD, 11);
@@ -415,7 +416,13 @@ public class Globals {
         return createTextButton(text, true, false, bgColor, font, padX, padY, noStretch, listener);
     }
 
-    public static JButton createTextButton(String text, boolean underline, boolean opaque, Color bgColor, Font font, int padX, int padY, boolean noStretch, ActionListener listener) {
+    public static JButton createLinkButton(String text, Font font, int padX, int padY, boolean noStretch, Color overrideColor, ActionListener listener) {
+        JButton btn = createTextButton(text, true, false, bgColor, font, padX, padY, noStretch, listener, false);
+        btn.setForeground(overrideColor);
+        return btn;
+    }
+
+    private static JButton createTextButton(String text, boolean underline, boolean opaque, Color bgColor, Font font, int padX, int padY, boolean noStretch, ActionListener listener, boolean hasColorChange) {
         Border defBorder = BorderFactory.createEmptyBorder(padY, padX, padY, padX);
         Border focusedBorder = BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(Color.BLACK),
@@ -454,7 +461,7 @@ public class Globals {
             }
 
         });
-        btn.addMouseListener(new MouseAdapter() {
+        if (hasColorChange) btn.addMouseListener(new MouseAdapter() {
 
             @Override
             public void mouseEntered(MouseEvent e) {
@@ -468,6 +475,10 @@ public class Globals {
 
         });
         return btn;
+    }
+
+    public static JButton createTextButton(String text, boolean underline, boolean opaque, Color bgColor, Font font, int padX, int padY, boolean noStretch, ActionListener listener) {
+        return createTextButton(text, underline, opaque, bgColor, font, padX, padY, noStretch, listener, true);
     }
 
     public enum IconSize {

@@ -51,6 +51,13 @@ public class DatabaseGUI extends JFrame {
         topPanel.setOpaque(false);
         fullPanel.add(topPanel, BorderLayout.NORTH);
 
+        JLabel titleLabel = new JLabel("Molecule Database");
+        titleLabel.setForeground(Globals.textColor);
+        titleLabel.setFont(Globals.titleFontSmall);
+        titleLabel.setAlignmentX(JComponent.CENTER_ALIGNMENT);
+        titleLabel.setBorder(BorderFactory.createEmptyBorder(10, 0, 8, 0));
+        topPanel.add(titleLabel);
+
         JPanel searchPanel = new JPanel();
         searchPanel.setBorder(BorderFactory.createEmptyBorder(10, 20, 8, 20));
         searchPanel.setOpaque(false);
@@ -125,18 +132,74 @@ public class DatabaseGUI extends JFrame {
                 BorderFactory.createLineBorder(Globals.textColor),
                 BorderFactory.createEmptyBorder(5, 8, 5, 8)
         ));
+        JButton clearIcon = Globals.createIconButton("\uf00d", Globals.textColor, Globals.IconSize.MEDIUM, "Clear Search", e -> {
+            searchField.setText("");
+        });
+
         searchPanel.add(searchField);
+        searchPanel.add(clearIcon);
 
         JPanel filtersPanel = new JPanel();
         filtersPanel.setLayout(new BoxLayout(filtersPanel, BoxLayout.X_AXIS));
         topPanel.add(filtersPanel);
 
-        JButton defSort = Globals.createButton("Default Sorting", Globals.btnFont, 0, 5, 3, x -> setSorter(MoleculeSorter.DefaultSorter));
-        JButton alphaSort = Globals.createButton("A -> Z", Globals.btnFont, 0, 5, 3, x -> setSorter(MoleculeSorter.AlphaSorter));
-        JButton revAlphaSort = Globals.createButton("Z -> A", Globals.btnFont, 0, 5, 3, x -> setSorter(MoleculeSorter.ReverseAlphaSorter));
+
+        JButton defSort = Globals.createButton("Default Sorting", Globals.menuFont, 25, 8, 3, x -> setSorter(MoleculeSorter.DefaultSorter));
+        MouseAdapter keepDarkDef = new MouseAdapter() {
+            @Override
+            public void mouseExited(MouseEvent e) {
+                defSort.setBackground(Globals.accentColorDark);
+            }
+        };
+
+        JButton alphaSort = Globals.createButton("A -> Z", Globals.menuFont, 25, 8, 3, x -> setSorter(MoleculeSorter.AlphaSorter));
+        MouseAdapter keepDarkAlpha = new MouseAdapter() {
+            @Override
+            public void mouseExited(MouseEvent e) {
+                alphaSort.setBackground(Globals.accentColorDark);
+            }
+        };
+
+        JButton revAlphaSort = Globals.createButton("Z -> A", Globals.menuFont, 25, 8, 3, x -> setSorter(MoleculeSorter.ReverseAlphaSorter));
+        MouseAdapter keepDarkRev = new MouseAdapter() {
+            @Override
+            public void mouseExited(MouseEvent e) {
+                revAlphaSort.setBackground(Globals.accentColorDark);
+            }
+        };
+
+        defSort.setBackground(Globals.accentColorDark);
+        defSort.addMouseListener(keepDarkDef);
+
+        defSort.addActionListener(e -> {
+            defSort.setBackground(Globals.accentColorDark);
+            defSort.addMouseListener(keepDarkDef);
+            alphaSort.setBackground(Globals.accentColor);
+            alphaSort.removeMouseListener(keepDarkAlpha);
+            revAlphaSort.setBackground(Globals.accentColor);
+            revAlphaSort.removeMouseListener(keepDarkRev);
+        });
+        alphaSort.addActionListener(e -> {
+            alphaSort.setBackground(Globals.accentColorDark);
+            alphaSort.addMouseListener(keepDarkAlpha);
+            defSort.setBackground(Globals.accentColor);
+            defSort.removeMouseListener(keepDarkDef);
+            revAlphaSort.setBackground(Globals.accentColor);
+            revAlphaSort.removeMouseListener(keepDarkRev);
+        });
+        revAlphaSort.addActionListener(e -> {
+            revAlphaSort.setBackground(Globals.accentColorDark);
+            revAlphaSort.addMouseListener(keepDarkRev);
+            alphaSort.setBackground(Globals.accentColor);
+            alphaSort.removeMouseListener(keepDarkAlpha);
+            defSort.setBackground(Globals.accentColor);
+            defSort.removeMouseListener(keepDarkDef);
+        });
 
         filtersPanel.add(defSort);
+        filtersPanel.add(Box.createHorizontalStrut(5));
         filtersPanel.add(alphaSort);
+        filtersPanel.add(Box.createHorizontalStrut(5));
         filtersPanel.add(revAlphaSort);
 
         molPanel = new JPanel();
@@ -151,7 +214,7 @@ public class DatabaseGUI extends JFrame {
         sp.setOpaque(false);
         vertical.setUnitIncrement(16);
         sp.setBorder(null);
-        setSize(650, 350);
+        setSize(700, 450);
 
         fullPanel.add(sp, BorderLayout.CENTER);
 
@@ -204,7 +267,6 @@ public class DatabaseGUI extends JFrame {
 
     public void setSearch(String search) {
         this.currSearch = search;
-        System.out.println(search);
         filterMols();
     }
 
@@ -222,13 +284,16 @@ public class DatabaseGUI extends JFrame {
         molPanel.removeAll();
         sortedList.forEach((mol) -> {
             JPanel panel = new JPanel();
-            panel.setLayout(new BoxLayout(panel, BoxLayout.X_AXIS));
+            panel.setLayout(new BorderLayout());
             panel.setBorder(BorderFactory.createEmptyBorder(8, 0, 8, 0));
             panel.setOpaque(false);
 
             JLabel nameLabel = new JLabel(mol.molName);
             nameLabel.setFont(Globals.btnFont);
             nameLabel.setForeground(Globals.textColor);
+
+            JPanel iconsPanel = new JPanel();
+            iconsPanel.setOpaque(false);
 
             JButton editIcon = Globals.createIconButton("\uF044", Globals.linkColor, Globals.IconSize.MEDIUM, "Edit " + mol.molName, e -> {
                 MoleculeSubframe.openMolFrame(mol);
@@ -241,14 +306,19 @@ public class DatabaseGUI extends JFrame {
                 }
             });
 
-            panel.add(Box.createHorizontalGlue());
-            panel.add(nameLabel);
-            panel.add(Box.createHorizontalStrut(120));
-            panel.add(editIcon);
-            panel.add(trashIcon);
-            panel.add(Box.createHorizontalGlue());
+            JLabel atomsLabel = new JLabel(mol.atoms.stream().map(a -> a.name).collect(Collectors.joining(",")));
+            atomsLabel.setFont(Globals.btnFontSmall);
+            atomsLabel.setForeground(Globals.textColor);
+            atomsLabel.setHorizontalAlignment(SwingConstants.CENTER);
 
-            panel.setMaximumSize(panel.getPreferredSize());
+            iconsPanel.add(editIcon);
+            iconsPanel.add(trashIcon);
+            panel.add(nameLabel, BorderLayout.WEST);
+            panel.add(atomsLabel, BorderLayout.CENTER);
+            panel.add(iconsPanel, BorderLayout.EAST);
+
+            panel.setMaximumSize(new Dimension((int) (getSize().width * 0.67f), panel.getPreferredSize().height));
+//            panel.setMaximumSize(panel.getPreferredSize());
             molPanel.add(panel);
         });
         molPanel.add(Box.createVerticalGlue());
@@ -281,19 +351,19 @@ public class DatabaseGUI extends JFrame {
         return molecules.stream().filter(mol -> mol.molName.equals(name)).findFirst().orElse(null);
     }
 
-    public void loadFile(String pathName, boolean ignored, boolean override) {
+    public void loadFile(String pathName, boolean override) {
         try {
             File f = new File(pathName);
+            if (override) molecules.clear();
             List<Molecule> mols = Molecule.createMolecules(new Scanner(f));
-            if (override) setMolecules(mols);
-            else addMolecules(mols);
+            addMolecules(mols);
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
     public void loadFile(String pathName) {
-        loadFile(pathName, true, false);
+        loadFile(pathName, false);
     }
 
     public void addSaveListener(SaveListener listener) {
@@ -305,25 +375,11 @@ public class DatabaseGUI extends JFrame {
     }
 
     public void saveDB(String path) {
-        // check that there is at least one molecule
+        // Check that there is at least one molecule type
         if (molecules.size() == 0) {
-//            errorLabel.setText("Error! A database must have at least one molecule!");
+            // TODO: Error dialog
             return;
         }
-
-        // if any molecule names are empty, don't save
-        if (molecules.stream().anyMatch(mol -> mol.molName.equals(""))) {
-//            errorLabel.setText("Error! Molecule names must not be empty!");
-            return;
-        }
-
-        // if any molecule names are repeated, don't save
-        if (molecules.stream().map(mol -> mol.molName).anyMatch(mol -> Collections.frequency(molecules.stream().map(m -> m.molName).collect(Collectors.toList()), mol) >1)) {
-//            errorLabel.setText("Error! Molecule names must be unique!");
-            return;
-        }
-
-//        errorLabel.setText("");
 
         try (FileWriter writer = new FileWriter(path)) {
             String str = toFile();
