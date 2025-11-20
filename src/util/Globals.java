@@ -120,7 +120,10 @@ public class Globals {
     public static Font menuFont = new Font(Font.MONOSPACED, Font.BOLD, 14);
     public static Font settingsFont = new Font(Font.SANS_SERIF, Font.BOLD, 12);
     public static Font settingsFontNoBold = new Font(Font.MONOSPACED, Font.PLAIN, 12);
-    public static Font iconFont;
+    public static Font iconFontS;
+    public static Font iconFontM;
+    public static Font iconFontL;
+    public static Font iconFontXL;
 
     public static Color bgColor = new Color(230, 246, 255);
     public static Color bgColorDark = Color.LIGHT_GRAY;
@@ -131,6 +134,7 @@ public class Globals {
     public static Color accentColor = new Color(37, 120, 143);
     public static Color accentColorLight = new Color(144, 216, 255);
     public static Color accentColorDark = new Color(23, 76, 89);
+    public static Color tertiaryColor = new Color(0, 178, 178);
     public static Color linkColor = new Color(17, 60, 205);
     public static Color linkColorAlt = new Color(122, 87, 219);
     public static Color errorColor = new Color(161, 0, 0);
@@ -352,17 +356,6 @@ public class Globals {
     }
 
     public static JButton createButton(String text, Color bgColor, Font font, int rounding, int padX, int padY, ActionListener listener) {
-        JButton btn = new JButton(text);
-        btn.setFont(font);
-        btn.setBackground(accentColor);
-        btn.setForeground(accentColorLight);
-        btn.addActionListener(listener);
-        btn.setUI(new MetalButtonUI() {
-            @Override
-            protected Color getSelectColor() {
-                return accentColorDark;
-            }
-        });
         Border defBorder = BorderFactory.createCompoundBorder(
                 new RoundedBorder(bgColor, 2, rounding),
                 BorderFactory.createEmptyBorder(padY, padX, padY, padX)
@@ -374,6 +367,18 @@ public class Globals {
                         BorderFactory.createEmptyBorder(padY - 1, padX - 1, padY - 1, padX - 1)
                 )
         );
+
+        JButton btn = new JButton(text);
+        btn.setFont(font);
+        btn.setBackground(accentColor);
+        btn.setForeground(accentColorLight);
+        btn.addActionListener(listener);
+        btn.setUI(new MetalButtonUI() {
+            @Override
+            protected Color getSelectColor() {
+                return accentColorDark;
+            }
+        });
         btn.setBorder(defBorder);
         btn.setFocusPainted(false);
         btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
@@ -411,6 +416,12 @@ public class Globals {
     }
 
     public static JButton createTextButton(String text, boolean underline, boolean opaque, Color bgColor, Font font, int padX, int padY, boolean noStretch, ActionListener listener) {
+        Border defBorder = BorderFactory.createEmptyBorder(padY, padX, padY, padX);
+        Border focusedBorder = BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(Color.BLACK),
+                BorderFactory.createEmptyBorder(padY - 1, padX - 1, padY - 1, padX - 1)
+        );
+
         JButton btn = new JButton(underline ? String.format("<html><u>%s</u></html>", text) : text);
         btn.setFont(font);
         btn.setBackground(bgColor);
@@ -420,14 +431,9 @@ public class Globals {
         btn.setUI(new MetalButtonUI() {
             @Override
             protected Color getSelectColor() {
-                return menuBgColor;
+                return accentColorLight;
             }
         });
-        Border defBorder = BorderFactory.createEmptyBorder(padY, padX, padY, padX);
-        Border focusedBorder = BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(Color.BLACK),
-                BorderFactory.createEmptyBorder(padY - 1, padX - 1, padY - 1, padX - 1)
-        );
         btn.setBorder(defBorder);
         btn.setFocusPainted(false);
         btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
@@ -445,6 +451,79 @@ public class Globals {
             @Override
             public void focusLost(FocusEvent e) {
                 btn.setBorder(defBorder);
+            }
+
+        });
+        btn.addMouseListener(new MouseAdapter() {
+
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                btn.setForeground(linkColorAlt);
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+                btn.setForeground(linkColor);
+            }
+
+        });
+        return btn;
+    }
+
+    public enum IconSize {
+        SMALL(iconFontS), MEDIUM(iconFontM), LARGE(iconFontL), EXTRA_LARGE(iconFontXL);
+
+        private Font f;
+
+        IconSize(Font f) {
+            this.f = f;
+        }
+
+        public Font getFont() {
+            return f;
+        }
+    }
+
+    public static JButton createIconButton(String icon, Color color, IconSize size, String tooltip, ActionListener listener) {
+        Border defBorder = BorderFactory.createEmptyBorder(5, 5, 5, 5);
+        Border focusedBorder = BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(Color.BLACK),
+                BorderFactory.createEmptyBorder(4, 4, 4, 4)
+        );
+
+        JButton btn = new JButton(icon);
+        btn.setFont(size.getFont());
+        btn.setBackground(bgColor);
+        btn.setOpaque(false);
+        btn.setForeground(color);
+        btn.addActionListener(listener);
+        btn.setBorder(defBorder);
+        btn.setFocusPainted(false);
+        btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        btn.setToolTipText(tooltip);
+        btn.addFocusListener(new FocusListener() {
+
+            @Override
+            public void focusGained(FocusEvent e) {
+                btn.setBorder(focusedBorder);
+            }
+
+            @Override
+            public void focusLost(FocusEvent e) {
+                btn.setBorder(defBorder);
+            }
+
+        });
+        btn.addMouseListener(new MouseAdapter() {
+
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                btn.setForeground(color.darker());
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+                btn.setForeground(color);
             }
 
         });

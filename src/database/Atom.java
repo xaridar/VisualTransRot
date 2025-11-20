@@ -326,19 +326,12 @@ public class Atom {
         panel.add(massPanel, gbc);
         gbc.gridx++;
 
-        JLabel trashIcon = new JLabel("\uf00d");
-        trashIcon.setFont(Globals.iconFont);
-        trashIcon.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        trashIcon.setForeground(Globals.errorColor);
-        trashIcon.setFocusable(true);
-        trashIcon.addMouseListener(new MouseAdapter() {
-            public void mouseClicked(MouseEvent e) {
-                mol.removeAtom(Atom.this);
-            }
+        JButton delIcon = Globals.createIconButton("\uF00D", Globals.errorColor, Globals.IconSize.MEDIUM, "Remove " + name, e -> {
+            mol.removeAtom(this);
         });
-        trashIcon.setToolTipText("Remove " + name);
+        delIcon.setAlignmentY(Component.CENTER_ALIGNMENT);
 
-        panel.add(trashIcon, gbc);
+        panel.add(delIcon, gbc);
 
         JPanel retPanel = new JPanel();
         retPanel.setLayout(new BoxLayout(retPanel, BoxLayout.Y_AXIS));

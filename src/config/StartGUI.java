@@ -501,51 +501,14 @@ public class StartGUI extends JFrame {
         contentPane.add(settingsPanel);
 
         molPanel = new JPanel();
+        molPanel.setLayout(new WrapLayout());
         molPanel.setOpaque(false);
 
         // add molecule count btn
-        addMolBtn = new JButton();
-        addMolBtn.setFont(Globals.iconFont);
-        addMolBtn.setBackground(Globals.bgColor);
-        addMolBtn.setForeground(Globals.textColor);
-        addMolBtn.setOpaque(false);
-        addMolBtn.setBorder(null);
-        addMolBtn.setText("\u002b");
-        addMolBtn.setAlignmentX(Component.CENTER_ALIGNMENT);
-        addMolBtn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        addMolBtn.setToolTipText("Add molecule count");
-        Border border = BorderFactory.createEmptyBorder(6, 6, 6, 6);
-        addMolBtn.setBorder(border);
-        addMolBtn.setFocusPainted(false);
-        addMolBtn.setUI(new MetalButtonUI() {
-            @Override
-                protected Color getSelectColor() {
-                    return Globals.bgColorDark;
-                }
-        });
-        addMolBtn.addActionListener(e -> {
+        addMolBtn = Globals.createIconButton("\u002B", Globals.textColor, Globals.IconSize.EXTRA_LARGE, "Add molecule count", e -> {
             setError("");
             addMolSelector("", 0);
             molPanel.repaint();
-        });
-        addMolBtn.addFocusListener(new FocusListener() {
-
-            private final Border defBorder = BorderFactory.createEmptyBorder(6, 6, 6, 6);
-            private final Border focusedBorder = BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(Color.BLACK),
-                BorderFactory.createEmptyBorder(5, 5, 5, 5)
-            );
-
-            @Override
-            public void focusGained(FocusEvent e) {
-                addMolBtn.setBorder(focusedBorder);
-            }
-
-            @Override
-            public void focusLost(FocusEvent e) {
-                addMolBtn.setBorder(defBorder);
-            }
-            
         });
         contentPane.add(molPanel);
         contentPane.add(addMolBtn);
@@ -776,27 +739,8 @@ public class StartGUI extends JFrame {
 
         panel.add(textField);
         fullPanel.add(panel);
-        
-        JButton delBtn = new JButton();
-        delBtn.setFont(Globals.iconFont);
-        delBtn.setBackground(Globals.bgColor);
-        delBtn.setForeground(Globals.textColor);
-        delBtn.setOpaque(false);
-        delBtn.setBorder(null);
-        delBtn.setText("\uf00d");
-        delBtn.setAlignmentX(Component.CENTER_ALIGNMENT);
-        delBtn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        delBtn.setToolTipText("Add molecule count");
-        Border border = BorderFactory.createEmptyBorder(6, 6, 6, 6);
-        delBtn.setBorder(border);
-        delBtn.setFocusPainted(false);
-        delBtn.setUI(new MetalButtonUI() {
-            @Override
-                protected Color getSelectColor() {
-                    return Globals.bgColorDark;
-                }
-        });
-        delBtn.addActionListener(e -> {
+
+        JButton delBtn = Globals.createIconButton("\uf00d", Globals.errorColor, Globals.IconSize.MEDIUM, "Remove instances of " + selected, e -> {
             molPanel.remove(fullPanel);
             usedMolNames.remove((String) comboBox.getSelectedItem());
             currMolDropdowns.remove(comboBox);
@@ -809,25 +753,6 @@ public class StartGUI extends JFrame {
             molPanel.repaint();
             molPanel.revalidate();
         });
-        delBtn.addFocusListener(new FocusListener() {
-
-            private final Border defBorder = BorderFactory.createEmptyBorder(6, 6, 6, 6);
-            private final Border focusedBorder = BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(Color.BLACK),
-                BorderFactory.createEmptyBorder(5, 5, 5, 5)
-            );
-
-            @Override
-            public void focusGained(FocusEvent e) {
-                delBtn.setBorder(focusedBorder);
-            }
-
-            @Override
-            public void focusLost(FocusEvent e) {
-                delBtn.setBorder(defBorder);
-            }
-            
-        });
         fullPanel.add(delBtn);
         fullPanel.add(Box.createRigidArea(new Dimension(16, 0)));
 
@@ -835,7 +760,6 @@ public class StartGUI extends JFrame {
         molPanel.remove(fixLabel);
         molPanel.add(fullPanel);
         molPanel.add(fixLabel);
-        molPanel.setMaximumSize(molPanel.getPreferredSize());
         molPanel.repaint();
         molPanel.revalidate();
     }
@@ -1012,7 +936,11 @@ public class StartGUI extends JFrame {
         LayoutManager lm = new BoxLayout(contentPane, BoxLayout.Y_AXIS);
         contentPane.setLayout(lm);
         contentPane.setBackground(Globals.bgColor);
-        setContentPane(contentPane);
+        JScrollPane sp = new JScrollPane(contentPane, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        sp.getVerticalScrollBar().setUnitIncrement(16);
+        sp.setBackground(Globals.bgColor);
+        sp.setBorder(null);
+        setContentPane(sp);
 
         DatabaseGUI.getInstance().loadFile(Globals.dbPath);
         DatabaseGUI.getInstance().addSaveListener(() -> {
@@ -1049,6 +977,7 @@ public class StartGUI extends JFrame {
         contentPane.add(errorLabel);
 
         setVisible(true);
+        setResizable(false);
         populateSettings(Globals.configPath);
     }
 

@@ -226,36 +226,28 @@ public class DatabaseGUI extends JFrame {
             panel.setBorder(BorderFactory.createEmptyBorder(8, 0, 8, 0));
             panel.setOpaque(false);
 
-            JButton nameBtn = Globals.createLinkButton(mol.molName, Globals.btnFont, 4, 1, true, e -> {
+            JLabel nameLabel = new JLabel(mol.molName);
+            nameLabel.setFont(Globals.btnFont);
+            nameLabel.setForeground(Globals.textColor);
+
+            JButton editIcon = Globals.createIconButton("\uF044", Globals.linkColor, Globals.IconSize.MEDIUM, "Edit " + mol.molName, e -> {
                 MoleculeSubframe.openMolFrame(mol);
             });
-            nameBtn.setAlignmentY(Component.CENTER_ALIGNMENT);
-
-            panel.add(Box.createHorizontalGlue());
-            panel.add(nameBtn);
-            panel.add(Box.createHorizontalStrut(20));
-
-            JLabel trashIcon = new JLabel("\uf00d");
-            trashIcon.setFont(Globals.iconFont);
-            trashIcon.setAlignmentY(Component.CENTER_ALIGNMENT);
-            trashIcon.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-            trashIcon.setForeground(Globals.errorColor);
-            trashIcon.setFocusable(true);
-            trashIcon.addMouseListener(new MouseAdapter() {
-                public void mouseClicked(MouseEvent e) {
-                    if (e.getButton() != MouseEvent.BUTTON1) return;
-                    int msg = JOptionPane.showConfirmDialog(DatabaseGUI.this, "Are you sure you want to delete this molecule?");
-                    if (msg == JOptionPane.YES_OPTION) {
-                        // remove molecule
-                        removeMolecule(mol);
-                    }
+            JButton trashIcon = Globals.createIconButton("\uf00d", Globals.errorColor, Globals.IconSize.MEDIUM, "Remove " + mol.molName, e -> {
+                int msg = JOptionPane.showConfirmDialog(DatabaseGUI.this, "Are you sure you want to delete this molecule?");
+                if (msg == JOptionPane.YES_OPTION) {
+                    // remove molecule
+                    removeMolecule(mol);
                 }
             });
-            trashIcon.setMaximumSize(trashIcon.getPreferredSize());
-            trashIcon.setToolTipText("Remove " + mol.molName);
 
+            panel.add(Box.createHorizontalGlue());
+            panel.add(nameLabel);
+            panel.add(Box.createHorizontalStrut(120));
+            panel.add(editIcon);
             panel.add(trashIcon);
             panel.add(Box.createHorizontalGlue());
+
             panel.setMaximumSize(panel.getPreferredSize());
             molPanel.add(panel);
         });
