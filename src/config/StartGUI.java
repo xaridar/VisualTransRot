@@ -46,6 +46,7 @@ public class StartGUI extends JFrame {
     private final Map<String, JCheckBox> checks = new HashMap<>();
     private final Map<String, Integer> selectedMols = new LinkedHashMap<>();
     private final Map<JComboBox<String>, JFormattedTextField> currMolDropdowns = new HashMap<>();
+    private final Map<JComboBox<String>, JButton> currMolDeleteBtns = new HashMap<>();
     private final Set<String> usedMolNames = new HashSet<>();
     private JLabel errorLabel;
     String inputFile = "";
@@ -413,7 +414,7 @@ public class StartGUI extends JFrame {
                         setError("");
                         fileButtonInp.setEnabled(checkBox.isSelected());
                         molPanel.setVisible(!checkBox.isSelected());
-                        addMolBtn.setVisible(usedMolNames.size() != DatabaseGUI.getInstance().getMolecules().size() && !checkBox.isSelected());
+                        addMolBtn.setVisible(!checkBox.isSelected());
                         fileNameInp.setVisible(checkBox.isSelected() && inputFile.length() > 0);
                     });
                 }
@@ -508,8 +509,12 @@ public class StartGUI extends JFrame {
         addMolBtn = Globals.createIconButton("\u002B", Globals.textColor, Globals.IconSize.EXTRA_LARGE, "Add molecule count", e -> {
             setError("");
             addMolSelector("", 0);
+
+            // disable the delete button for a single element; should only be no selectors when the database is empty
+            currMolDeleteBtns.values().forEach(v -> v.setEnabled(currMolDeleteBtns.size() != 1));
             molPanel.repaint();
         });
+        addMolBtn.setAlignmentX(JComponent.CENTER_ALIGNMENT);
         contentPane.add(molPanel);
         contentPane.add(addMolBtn);
 
@@ -590,6 +595,7 @@ public class StartGUI extends JFrame {
         molPanel.removeAll();
         selectedMols.clear();
         currMolDropdowns.clear();
+        currMolDeleteBtns.clear();
         usedMolNames.clear();
         molPanel.add(fixLabel);
         molPanel.repaint();
@@ -597,6 +603,8 @@ public class StartGUI extends JFrame {
     }
     
     private void addMolSelector(String selected, int value) {
+        // return early if the molecule type cannot be found in the database
+        if (!selected.equals("") && DatabaseGUI.getInstance().getMolecule(selected) == null) return;
         JPanel fullPanel = new JPanel();
         fullPanel.setOpaque(false);
 
@@ -722,7 +730,6 @@ public class StartGUI extends JFrame {
                 usedMolNames.add((String) e.getItem());
                 selectedMols.put((String) e.getItem(), ((Long) textField.getValue()).intValue());
             }
-            addMolBtn.setVisible(usedMolNames.size() < DatabaseGUI.getInstance().getMoleculeNames().size());
             addMolBtn.setEnabled(usedMolNames.size() < DatabaseGUI.getInstance().getMoleculeNames().size());
             for (JComboBox<String> cb : currMolDropdowns.keySet()) {
                 if (cb == comboBox)
@@ -739,22 +746,25 @@ public class StartGUI extends JFrame {
 
         panel.add(textField);
         fullPanel.add(panel);
-
         JButton delBtn = Globals.createIconButton("\uf00d", Globals.errorColor, Globals.IconSize.MEDIUM, "Remove instances of " + selected, e -> {
             molPanel.remove(fullPanel);
             usedMolNames.remove((String) comboBox.getSelectedItem());
             currMolDropdowns.remove(comboBox);
+            currMolDeleteBtns.remove(comboBox);
             selectedMols.remove((String) comboBox.getSelectedItem());
-            addMolBtn.setVisible(usedMolNames.size() < DatabaseGUI.getInstance().getMoleculeNames().size());
             addMolBtn.setEnabled(usedMolNames.size() < DatabaseGUI.getInstance().getMoleculeNames().size());
             for (JComboBox<String> cb : currMolDropdowns.keySet()) {
                 updateMolComboBox(cb);
             }
+
+            // disable the delete button for a single element; should only be no selectors when the database is empty
+            currMolDeleteBtns.values().forEach(v -> v.setEnabled(currMolDeleteBtns.size() != 1));
             molPanel.repaint();
             molPanel.revalidate();
         });
         fullPanel.add(delBtn);
-        fullPanel.add(Box.createRigidArea(new Dimension(16, 0)));
+        currMolDeleteBtns.put(comboBox, delBtn);
+        fullPanel.add(Box.createHorizontalStrut(16));
 
         // Remove bugfix label
         molPanel.remove(fixLabel);
@@ -887,18 +897,6 @@ public class StartGUI extends JFrame {
         sp.setBorder(null);
         setContentPane(sp);
 
-        DatabaseGUI.getInstance().loadFile(Globals.dbPath, true);
-        DatabaseGUI.getInstance().addSaveListener(() -> {
-            for (JComboBox<String> cb : currMolDropdowns.keySet()) {
-                updateMolComboBox(cb);
-            }
-            addMolBtn.setVisible(usedMolNames.size() < DatabaseGUI.getInstance().getMoleculeNames().size());
-            addMolBtn.setEnabled(usedMolNames.size() < DatabaseGUI.getInstance().getMoleculeNames().size());
-            for (JComboBox<String> cb : currMolDropdowns.keySet()) {
-                updateMolComboBox(cb);
-            }
-        });
-
         // if any paths are outdated, delete them to go back to defaults
         if (!new File(Globals.pref.get("OUTPUT_PATH", Globals.parentPath)).exists()) Globals.pref.remove("OUTPUT_PATH");
         if (!new File(Globals.pref.get("SAVE_AS_PATH", Globals.parentPath)).exists()) Globals.pref.remove("SAVE_AS_PATH");
@@ -909,6 +907,18 @@ public class StartGUI extends JFrame {
         if (!new File(Globals.pref.get("DB_PATH", Globals.parentPath)).exists()) Globals.pref.remove("DB_PATH");
 
         outputFilepath = Globals.pref.get("OUTPUT_PATH", Globals.parentPath);
+
+        DatabaseGUI.getInstance().loadFile(Globals.dbPath, true);
+        DatabaseGUI.getInstance().addSaveListener(() -> {
+            addMolBtn.setEnabled(usedMolNames.size() < DatabaseGUI.getInstance().getMoleculeNames().size());
+            if (currMolDropdowns.size() == 0) {
+                addMolSelector("", 0);
+                return;
+            }
+            for (JComboBox<String> cb : currMolDropdowns.keySet()) {
+                updateMolComboBox(cb);
+            }
+        });
 
         addMenu();
         drawTitle();
@@ -921,9 +931,14 @@ public class StartGUI extends JFrame {
         errorLabel.setBorder(BorderFactory.createEmptyBorder(6, 0, 6, 0));
         contentPane.add(errorLabel);
 
+
         setVisible(true);
         setResizable(false);
+
         populateSettings(Globals.configPath);
+
+        // disable the delete button for a single element; should only be no selectors when the database is empty
+        currMolDeleteBtns.values().forEach(v -> v.setEnabled(currMolDeleteBtns.size() != 1));
     }
 
     private void closeWindow() {
@@ -998,6 +1013,8 @@ public class StartGUI extends JFrame {
                     }
             });
         }
+
+        addMolBtn.setEnabled(usedMolNames.size() != DatabaseGUI.getInstance().getMolecules().size());
         
         fileButtonInp.setEnabled((boolean) settings.get("Use Input.xyz"));
         fileButtonParams.setEnabled((boolean) settings.get("Choose All Interaction Parameters"));
@@ -1042,7 +1059,7 @@ public class StartGUI extends JFrame {
         KeyboardFocusManager.getCurrentKeyboardFocusManager().clearGlobalFocusOwner();
         try (FileWriter writer = new FileWriter(path)) {
             // Long list of functions that sorts the list of settings as they are
-            // sorted in Globals.setting before formatting into a String to write
+            // sorted in Globals.settings before formatting into a String to write
             String str = settings
                     .keySet() // returns setting names
                     .stream()

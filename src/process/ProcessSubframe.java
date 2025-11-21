@@ -237,7 +237,7 @@ public class ProcessSubframe extends JFrame {
                     filePanel.add(btn, BorderLayout.WEST);
 
                     if (file.getName().endsWith(".xyz") && !file.getName().endsWith("Movie.xyz")) {
-                        JButton popBtn = Globals.createButton("Use as Input.xyz", Globals.menuBgColorLight, Globals.btnFontSmaller, 25, 10, 4, e -> {
+                        JButton popBtn = Globals.createButton("Use as Input.xyz", Globals.menuBgColorLight, null, null, null, Globals.btnFontSmaller, 25, 10, 4, e -> {
                             try {
                                 StartGUI.getInstance().createInput(file);
                             } catch (IOException ioException) {

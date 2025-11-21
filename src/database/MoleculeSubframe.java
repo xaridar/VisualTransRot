@@ -65,9 +65,12 @@ public class MoleculeSubframe extends JFrame {
         getRootPane().registerKeyboardAction(e -> mol.resetMol(),
                 KeyStroke.getKeyStroke(KeyEvent.VK_R, InputEvent.CTRL_DOWN_MASK),
                 JComponent.WHEN_IN_FOCUSED_WINDOW);
-        getRootPane().registerKeyboardAction(e -> mol.saveMolecule(),
-                KeyStroke.getKeyStroke(KeyEvent.VK_S, InputEvent.CTRL_DOWN_MASK),
-                JComponent.WHEN_IN_FOCUSED_WINDOW);
+        getRootPane().registerKeyboardAction(e -> {
+                mol.saveMolecule();
+                DatabaseGUI.getInstance().saveDB(Globals.dbPath);
+            },
+            KeyStroke.getKeyStroke(KeyEvent.VK_S, InputEvent.CTRL_DOWN_MASK),
+            JComponent.WHEN_IN_FOCUSED_WINDOW);
 
         // Close window on ESC
         getRootPane().registerKeyboardAction(e -> closeWindow(),
@@ -87,6 +90,7 @@ public class MoleculeSubframe extends JFrame {
                     null);
             if (msg == JOptionPane.YES_OPTION) {
                 if (!mol.saveMolecule()) return;
+                DatabaseGUI.getInstance().saveDB(Globals.dbPath);
             } else if (msg == JOptionPane.NO_OPTION) {
                 mol.resetMol();
             } else return;

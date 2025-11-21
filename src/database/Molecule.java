@@ -15,6 +15,7 @@ import javax.swing.text.AttributeSet;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.DocumentFilter;
 import javax.swing.text.NumberFormatter;
+import javax.xml.crypto.Data;
 
 import util.Globals;
 
@@ -235,7 +236,7 @@ public class Molecule {
         }
         SwingUtilities.invokeLater(() -> changed = false);
         savedState = copy();
-        DatabaseGUI.getInstance().saveDB(Globals.dbPath);
+//        DatabaseGUI.getInstance().saveDB(Globals.dbPath);
         return true;
     }
 
@@ -437,7 +438,10 @@ public class Molecule {
         // Molecule buttons
         JButton addBtn = Globals.createButton("Add Atom (Ctrl+N)", Globals.menuFont, 40, 18, 6, e -> addEmptyAtom());
         JButton resetBtn = Globals.createButton("Reset to Saved Molecule (Ctrl+R)", Globals.menuFont, 40, 18, 6, e -> resetMol());
-        JButton saveBtn = Globals.createButton("Save Molecule (Ctrl+S)", Globals.menuFont, 40, 18, 6, e -> saveMolecule());
+        JButton saveBtn = Globals.createButton("Save Molecule (Ctrl+S)", Globals.menuFont, 40, 18, 6, e -> {
+            saveMolecule();
+            DatabaseGUI.getInstance().saveDB(Globals.dbPath);
+        });
 
         editPanel.add(Box.createHorizontalGlue());
         editPanel.add(addBtn);

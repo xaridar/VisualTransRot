@@ -218,7 +218,6 @@ public class DatabaseGUI extends JFrame {
         molPanel = new JPanel();
         molPanel.setBackground(Globals.bgColor);
         molPanel.setLayout(new BoxLayout(molPanel, BoxLayout.Y_AXIS));
-        molPanel.setBorder(BorderFactory.createEmptyBorder(15, 20, 25, 20));
         repaintMols();
 
         JScrollPane sp = new JScrollPane(molPanel, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
@@ -226,12 +225,31 @@ public class DatabaseGUI extends JFrame {
         JScrollBar vertical = sp.getVerticalScrollBar();
         sp.setOpaque(false);
         vertical.setUnitIncrement(16);
-        sp.setBorder(null);
-        setSize(700, 450);
+        sp.setBorder(BorderFactory.createEmptyBorder(15, 32, 20, 32));
 
         fullPanel.add(sp, BorderLayout.CENTER);
 
+        JPanel btnPanel = new JPanel();
+        btnPanel.setOpaque(false);
+        JButton clearBtn = Globals.createButton("Clear Molecules", Globals.bgColor, Globals.errorColor, Globals.errorColor.darker(), Color.WHITE, Globals.btnFont, 25, 16, 8, e -> {
+            int msg = JOptionPane.showConfirmDialog(DatabaseGUI.this,
+                    "Are you sure you want to delete all molecules? This cannot be undone!",
+                    "Confirm Deletion",
+                    JOptionPane.YES_NO_OPTION,
+                    JOptionPane.WARNING_MESSAGE,
+                    null);
+            if (msg == JOptionPane.YES_OPTION) {
+                // clear molecules
+                clearMolecules();
+                saveDB(Globals.dbPath);
+            }
+        });
+        clearBtn.setMaximumSize(clearBtn.getPreferredSize());
+        btnPanel.add(clearBtn);
+        fullPanel.add(btnPanel, BorderLayout.SOUTH);
+
         setContentPane(fullPanel);
+        setSize(700, 500);
         setResizable(false);
         setLocationRelativeTo(getParent());
 
@@ -504,12 +522,6 @@ public class DatabaseGUI extends JFrame {
     }
 
     public void saveDB(String path) {
-        // Check that there is at least one molecule type
-        if (molecules.size() == 0) {
-            // TODO: Error dialog
-            return;
-        }
-
         try (FileWriter writer = new FileWriter(path)) {
             String str = toFile();
             writer.write(str);

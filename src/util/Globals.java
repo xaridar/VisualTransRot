@@ -354,10 +354,10 @@ public class Globals {
     }
 
     public static JButton createButton(String text, Font font, int rounding, int padX, int padY, ActionListener listener) {
-        return createButton(text, bgColor, font, rounding, padX, padY, listener);
+        return createButton(text, bgColor, null, null, null, font, rounding, padX, padY, listener);
     }
 
-    public static JButton createButton(String text, Color bgColor, Font font, int rounding, int padX, int padY, ActionListener listener) {
+    public static JButton createButton(String text, Color bgColor, Color buttonColor, Color buttonColorDark, Color textColor, Font font, int rounding, int padX, int padY, ActionListener listener) {
         Border defBorder = BorderFactory.createCompoundBorder(
                 new RoundedBorder(bgColor, 2, rounding),
                 BorderFactory.createEmptyBorder(padY, padX, padY, padX)
@@ -372,13 +372,13 @@ public class Globals {
 
         JButton btn = new JButton(text);
         btn.setFont(font);
-        btn.setBackground(accentColor);
-        btn.setForeground(accentColorLight);
+        btn.setBackground(buttonColor != null ? buttonColor : accentColor);
+        btn.setForeground(textColor != null ? textColor : accentColorLight);
         btn.addActionListener(listener);
         btn.setUI(new MetalButtonUI() {
             @Override
             protected Color getSelectColor() {
-                return accentColorDark;
+                return buttonColor != null ? buttonColorDark : accentColorDark;
             }
         });
         btn.setBorder(defBorder);
@@ -401,12 +401,12 @@ public class Globals {
 
             @Override
             public void mouseEntered(MouseEvent e) {
-                btn.setBackground(accentColorDark);
+                btn.setBackground(buttonColor != null ? buttonColorDark : accentColorDark);
             }
 
             @Override
             public void mouseExited(MouseEvent e) {
-                btn.setBackground(accentColor);
+                btn.setBackground(buttonColor != null ? buttonColor : accentColor);
             }
 
         });
