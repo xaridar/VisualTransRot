@@ -312,8 +312,14 @@ public class DatabaseGUI extends JFrame {
                             panel.add(label);
                             panel.add(sp);
 
-                            int res = JOptionPane.showConfirmDialog(this, panel, "Paste Molecules to Import", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
-                            if (res != JOptionPane.YES_OPTION) return;
+                            JOptionPane op = new JOptionPane(panel, JOptionPane.PLAIN_MESSAGE, JOptionPane.OK_CANCEL_OPTION) {
+                                @Override
+                                public void selectInitialValue() {
+                                    ta.requestFocusInWindow();
+                                }
+                            };
+                            op.createDialog(this, "Paste Molecules to Import").setVisible(true);
+                            if (op.getValue() != null && (int) op.getValue() != JOptionPane.YES_OPTION) return;
                             loadFromScanner(new Scanner(ta.getText()), false);
                         }, KeyEvent.VK_T)
                 )
