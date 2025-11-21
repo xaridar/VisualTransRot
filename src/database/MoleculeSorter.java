@@ -5,7 +5,7 @@ import java.util.Comparator;
 public class MoleculeSorter implements Comparator<Molecule> {
     public static MoleculeSorter DefaultSorter = new MoleculeSorter((o1, o2) -> 0);
     public static MoleculeSorter AlphaSorter = new MoleculeSorter(Comparator.comparing(mol -> mol.molName, MoleculeSorter::alphaCompare));
-    public static MoleculeSorter ReverseAlphaSorter = new MoleculeSorter((o1, o2) -> o2.molName.compareTo(o1.molName));
+    public static MoleculeSorter ReverseAlphaSorter = new MoleculeSorter(Comparator.comparing(mol -> mol.molName, (a, b) -> -alphaCompare(a, b)));
 
     private Comparator<Molecule> comparator;
 

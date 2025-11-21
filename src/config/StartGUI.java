@@ -788,7 +788,7 @@ public class StartGUI extends JFrame {
         JMenuBar menuBar = new JMenuBar();
         menuBar.setBackground(Globals.bgColor);
         menuBar.setBorderPainted(false);
-        JMenu fileMenu = createMenuOption("File", KeyEvent.VK_F,
+        JMenu fileMenu = Globals.createMenuOption(new MenuOption("File", KeyEvent.VK_F,
                 new MenuOption("Edit Database", e -> {
                     DatabaseGUI.getInstance().loadFile(Globals.dbPath, true);
                     DatabaseGUI.getInstance().setVisible(true);
@@ -829,9 +829,9 @@ public class StartGUI extends JFrame {
                 }, KeyEvent.VK_A, 12),
                 new MenuOption("Save config", e -> saveSettings(Globals.configPath), KeyEvent.VK_S),
                 new MenuOption("Quit", e -> closeWindow(), KeyEvent.VK_Q)
-        );
+        ));
         menuBar.add(fileMenu);
-        JMenu optionsMenu = createMenuOption("Options", KeyEvent.VK_O,
+        JMenu optionsMenu = Globals.createMenuOption(new MenuOption("Options", KeyEvent.VK_O,
                 new MenuOption("Set output directorY", e ->
                 {
                     String outputPath = Globals.pref.get("OUTPUT_PATH", Globals.parentPath);
@@ -854,68 +854,13 @@ public class StartGUI extends JFrame {
                     } catch (IOException ioException) {
                         ioException.printStackTrace();
                     }
-                }, KeyEvent.VK_W));
+                }, KeyEvent.VK_W)));
         menuBar.add(optionsMenu);
-        JMenu processesMenu = createMenuOption("Processes", KeyEvent.VK_P,
-                new MenuOption("Monitor processes", e -> ProcessGUI.getInstance().setVisible(true), KeyEvent.VK_M));
+        JMenu processesMenu = Globals.createMenuOption(new MenuOption("Processes", KeyEvent.VK_P,
+                new MenuOption("Monitor processes", e -> ProcessGUI.getInstance().setVisible(true), KeyEvent.VK_M)));
         menuBar.add(processesMenu);
 
         setJMenuBar(menuBar);
-    }
-
-    private JMenu createMenuOption(String name, int mnemonic, MenuOption... items) {
-        JMenu menu = new JMenu(name);
-        menu.setMnemonic(mnemonic);
-        menu.setBorderPainted(false);
-        menu.setForeground(Globals.textColor);
-        menu.setFont(Globals.menuFont);
-        menu.setOpaque(true);
-        menu.setBackground(Globals.bgColor);
-        menu.addMouseListener(new MouseAdapter() {
-
-            @Override
-            public void mouseEntered(MouseEvent e) {
-                menu.setBackground(Globals.bgColorDark);
-            }
-
-            @Override
-            public void mouseExited(MouseEvent e) {
-                menu.setBackground(Globals.bgColor);
-            }
-
-        });
-        JPopupMenu popupMenu = menu.getPopupMenu();
-        popupMenu.setBorder(BorderFactory.createEmptyBorder());
-
-        for (MenuOption opt : items) {
-            JMenuItem item = createSubOption(opt);
-            menu.add(item);
-        }
-
-        return menu;
-    }
-
-    private JMenuItem createSubOption(MenuOption opt) {
-        JMenuItem item = new JMenuItem(opt.name) {
-            @Override
-            protected void paintComponent(Graphics g) {
-                KeyStroke accel = getAccelerator();
-                setAccelerator(null);
-                super.paintComponent(g);
-                setAccelerator(accel);
-            }
-        };
-        item.setMnemonic(opt.mnemonic);
-        if (opt.mnemonicIndex != -1) item.setDisplayedMnemonicIndex(opt.mnemonicIndex);
-        item.setAccelerator(KeyStroke.getKeyStroke(opt.mnemonic, KeyEvent.CTRL_DOWN_MASK));
-        item.setBackground(Globals.menuBgColor);
-        item.setBorderPainted(false);
-        item.setForeground(Globals.textColor);
-        item.setFont(Globals.menuFont);
-
-        // action
-        item.addActionListener(opt.listener);
-        return item;
     }
 
     public void init() {
@@ -942,7 +887,7 @@ public class StartGUI extends JFrame {
         sp.setBorder(null);
         setContentPane(sp);
 
-        DatabaseGUI.getInstance().loadFile(Globals.dbPath);
+        DatabaseGUI.getInstance().loadFile(Globals.dbPath, true);
         DatabaseGUI.getInstance().addSaveListener(() -> {
             for (JComboBox<String> cb : currMolDropdowns.keySet()) {
                 updateMolComboBox(cb);

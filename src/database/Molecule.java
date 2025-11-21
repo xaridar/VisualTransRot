@@ -85,7 +85,12 @@ public class Molecule {
             mol.molName = name;
             mol.radius = radius;
             mol.atoms = atoms;
-            mol.saveMolecule();
+
+            // don't save right now if it errors
+            // this error only occurs from duplicated, which are taken care of elsewhere
+            try {
+                mol.saveMolecule();
+            } catch (NullPointerException ignored) {}
             mols.add(mol);
         }
         return mols;

@@ -1,11 +1,13 @@
 package database;
 
+import config.MenuOption;
 import util.Globals;
 import util.SaveListener;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.File;
@@ -26,6 +28,15 @@ public class DatabaseGUI extends JFrame {
         return Instance;
     }
 
+    // options for database loading
+    public static final int FILE = 0;
+    public static final int TEXT = 1;
+
+    public static final int REPLACE = 0;
+    public static final int APPEND = 1;
+    public static final int APPEND_OLD = 2;
+    public static final int APPEND_NEW = 3;
+
     private final List<SaveListener> listeners = new ArrayList<>();
 
     private final List<Molecule> molecules = new ArrayList<>();
@@ -40,6 +51,8 @@ public class DatabaseGUI extends JFrame {
     private DatabaseGUI() {
         super(Globals.appName + " - Database");
         sortedList.addAll(molecules);
+
+        addMenu();
 
         JPanel fullPanel = new JPanel();
         fullPanel.setBackground(Globals.bgColor);
@@ -228,6 +241,70 @@ public class DatabaseGUI extends JFrame {
                 JComponent.WHEN_IN_FOCUSED_WINDOW);
     }
 
+    private void addMenu() {
+        JMenuBar menuBar = new JMenuBar();
+        menuBar.setBackground(Globals.bgColor);
+        menuBar.setBorderPainted(false);
+        JMenu fileMenu = Globals.createMenuOption(new MenuOption("File", KeyEvent.VK_F,
+                new MenuOption("Save database As...", e ->
+                {
+                    String saveAsPath = Globals.pref.get("SAVE_AS_DB_PATH", Globals.parentPath);
+                    JFileChooser fc = new JFileChooser(saveAsPath);
+                    fc.setFileSelectionMode(JFileChooser.FILES_ONLY);
+                    fc.setFileFilter(new FileNameExtensionFilter(".txt files", "txt"));
+                    fc.setAcceptAllFileFilterUsed(false);
+                    fc.setDialogTitle("Save database as");
+                    fc.setSelectedFile(new File("dbase.txt"));
+                    int res = fc.showSaveDialog(this);
+                    if (res == JFileChooser.APPROVE_OPTION) {
+                        if (!fc.getSelectedFile().toString().endsWith(".txt")) return;
+                        try {
+                            if (!fc.getSelectedFile().exists()) fc.getSelectedFile().createNewFile();
+                            Globals.pref.put("SAVE_AS_DB_PATH", fc.getSelectedFile().getAbsolutePath());
+                            saveDB(fc.getSelectedFile().getAbsolutePath());
+                        } catch (IOException ignored) {}
+                    }
+                }, KeyEvent.VK_A, 14),
+                new MenuOption("Load molecules...", KeyEvent.VK_L,
+                        new MenuOption("from .txt File", e2 -> {
+                            String databasePath = Globals.pref.get("DB_PATH", Globals.parentPath);
+                            JFileChooser databaseChooser = new JFileChooser(databasePath);
+                            databaseChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+                            databaseChooser.setFileFilter(new FileNameExtensionFilter(".txt input files", "txt"));
+                            databaseChooser.setAcceptAllFileFilterUsed(false);
+                            databaseChooser.setDialogTitle("Load a defined dbase.txt file");
+                            int out = databaseChooser.showOpenDialog(this);
+                            if (out == JFileChooser.APPROVE_OPTION) {
+                                Globals.pref.put("DB_PATH", databaseChooser.getCurrentDirectory().getAbsolutePath());
+                                databaseChooser.setCurrentDirectory(databaseChooser.getCurrentDirectory());
+                                loadFile(databaseChooser.getSelectedFile().getAbsolutePath());
+                            }
+                        }, KeyEvent.VK_F, 10),
+                        new MenuOption("from Text input", e2 -> {
+                            JPanel panel = new JPanel();
+                            panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+                            JLabel label = new JLabel("Please paste a string containing 1 or more molecules here:");
+                            label.setAlignmentX(JComponent.CENTER_ALIGNMENT);
+
+                            JTextArea ta = new JTextArea(50, 60);
+                            ta.setLineWrap(true);
+                            ta.setWrapStyleWord(true);
+                            JScrollPane sp = new JScrollPane(ta, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+                            sp.setPreferredSize(new Dimension(sp.getPreferredSize().width, 300));
+                            panel.add(label);
+                            panel.add(sp);
+
+                            int res = JOptionPane.showConfirmDialog(this, panel, "Paste Molecules to Import", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+                            if (res != JOptionPane.YES_OPTION) return;
+                            loadFromScanner(new Scanner(ta.getText()), false);
+                        }, KeyEvent.VK_T)
+                )
+        ));
+        menuBar.add(fileMenu);
+
+        setJMenuBar(menuBar);
+    }
+
     void closeWindow() {
         dispose();
     }
@@ -296,14 +373,18 @@ public class DatabaseGUI extends JFrame {
             JPanel iconsPanel = new JPanel();
             iconsPanel.setOpaque(false);
 
-            JButton editIcon = Globals.createIconButton("\uF044", Globals.linkColor, Globals.IconSize.MEDIUM, "Edit " + mol.molName, e -> {
-                MoleculeSubframe.openMolFrame(mol.currState());
-            });
+            JButton editIcon = Globals.createIconButton("\uF044", Globals.linkColor, Globals.IconSize.MEDIUM, "Edit " + mol.molName, e -> MoleculeSubframe.openMolFrame(mol.currState()));
             JButton trashIcon = Globals.createIconButton("\uf00d", Globals.errorColor, Globals.IconSize.MEDIUM, "Remove " + mol.molName, e -> {
-                int msg = JOptionPane.showConfirmDialog(DatabaseGUI.this, "Are you sure you want to delete this molecule?");
+                int msg = JOptionPane.showConfirmDialog(DatabaseGUI.this,
+                        "Are you sure you want to delete this molecule? This cannot be undone!",
+                        "Confirm Deletion",
+                        JOptionPane.YES_NO_OPTION,
+                        JOptionPane.WARNING_MESSAGE,
+                        null);
                 if (msg == JOptionPane.YES_OPTION) {
                     // remove molecule
                     removeMolecule(mol.currState());
+                    saveDB(Globals.dbPath);
                 }
             });
 
@@ -319,7 +400,6 @@ public class DatabaseGUI extends JFrame {
             panel.add(iconsPanel, BorderLayout.EAST);
 
             panel.setMaximumSize(new Dimension((int) (getSize().width * 0.67f), panel.getPreferredSize().height));
-//            panel.setMaximumSize(panel.getPreferredSize());
             molPanel.add(panel);
         });
         molPanel.add(Box.createVerticalGlue());
@@ -352,19 +432,67 @@ public class DatabaseGUI extends JFrame {
         return molecules.stream().map(Molecule::saved).filter(mol -> mol.molName.equals(name)).findFirst().orElse(null);
     }
 
-    public void loadFile(String pathName, boolean override) {
-        try {
-            File f = new File(pathName);
-            if (override) molecules.clear();
-            List<Molecule> mols = Molecule.createMolecules(new Scanner(f));
-            addMolecules(mols);
-        } catch (IOException e) {
-            e.printStackTrace();
+    private int getFileImportType(boolean appendOptions) {
+        String[] options = appendOptions ? new String[]{"Replace", "Append - Keep Old", "Append - Keep New"} :
+                new String[]{"Replace", "Append"};
+        int res = JOptionPane.showOptionDialog(this, "The imported molecules can either replace or append to the existing molecules.\n" +
+                        (appendOptions ? "Additionally, if molecules are appended, you can choose whether to keep old or new molecules." : ""),
+                "Select Import Type",
+                JOptionPane.DEFAULT_OPTION,
+                JOptionPane.QUESTION_MESSAGE,
+                null,
+                options,
+                "Replace");
+        if (res == JOptionPane.CLOSED_OPTION) return -1;
+        switch (options[res]) {
+            case "Replace":
+                return REPLACE;
+            case "Append":
+                return APPEND;
+            case "Append - Keep Old":
+                return APPEND_OLD;
+            case "Append - Keep New":
+                return APPEND_NEW;
+            default:
+                return -1;
         }
+    }
+
+    public void loadFromScanner(Scanner s, boolean autoOverride) {
+        List<Molecule> mols = Molecule.createMolecules(s);
+
+        // check for duplicate names
+        List<String> dupeNames = mols.stream().map(mol -> mol.molName).collect(Collectors.toList());
+        List<String> savedNames = molecules.stream().map(mol -> mol.saved().molName).collect(Collectors.toList());
+        dupeNames.retainAll(savedNames);
+
+        int overrideType = autoOverride ? REPLACE : getFileImportType(dupeNames.size() > 0);
+        if (overrideType == -1) return;
+        if (overrideType == REPLACE) {
+            molecules.clear();
+            mols.forEach(Molecule::saveMolecule);
+        } else if (overrideType == APPEND_OLD) {
+            mols.removeIf(mol -> dupeNames.contains(mol.molName));
+            molecules.forEach(Molecule::saveMolecule);
+        } else if (overrideType == APPEND_NEW) {
+            molecules.removeIf(mol -> dupeNames.contains(mol.saved().molName));
+            mols.forEach(Molecule::saveMolecule);
+        }
+        addMolecules(mols);
+        saveDB(Globals.dbPath);
     }
 
     public void loadFile(String pathName) {
         loadFile(pathName, false);
+    }
+
+    public void loadFile(String pathName, boolean autoOverride) {
+        try {
+            File f = new File(pathName);
+            loadFromScanner(new Scanner(f), autoOverride);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     public void addSaveListener(SaveListener listener) {

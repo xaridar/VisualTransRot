@@ -23,6 +23,7 @@ import javax.swing.border.Border;
 import javax.swing.plaf.metal.MetalButtonUI;
 
 import config.Constraint;
+import config.MenuOption;
 
 public class Globals {
 
@@ -539,5 +540,79 @@ public class Globals {
 
         });
         return btn;
+    }
+
+    public static JMenu createMenuOption(MenuOption opt) {
+        return createMenuOption(opt, false);
+    }
+
+    public static JMenu createMenuOption(MenuOption opt, boolean nested) {
+        JMenu menu = new JMenu(opt.name);
+        menu.setMnemonic(opt.mnemonic);
+        menu.setBorderPainted(false);
+        menu.setForeground(Globals.textColor);
+        menu.setFont(Globals.menuFont);
+        menu.setOpaque(true);
+        menu.setBackground(!nested ? Globals.bgColor : Globals.menuBgColor);
+        menu.addMouseListener(new MouseAdapter() {
+
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                menu.setBackground(Globals.bgColorDark);
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+                menu.setBackground(!nested ? Globals.bgColor : Globals.menuBgColor);
+            }
+
+        });
+        JPopupMenu popupMenu = menu.getPopupMenu();
+        popupMenu.setBorder(BorderFactory.createEmptyBorder());
+
+        for (MenuOption subopt : opt.suboptions) {
+            JComponent item;
+            if (subopt.suboptions != null) item = createMenuOption(subopt, true);
+            else item = createSubOption(subopt);
+            menu.add(item);
+        }
+
+        return menu;
+    }
+
+    private static JMenuItem createSubOption(MenuOption opt) {
+        JMenuItem item = new JMenuItem(opt.name) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                KeyStroke accel = getAccelerator();
+                setAccelerator(null);
+                super.paintComponent(g);
+                setAccelerator(accel);
+
+                if (accel != null) {
+                    Graphics2D g2 = (Graphics2D) g.create();
+                    g2.setColor(Globals.textColor);
+                    g2.setFont(getFont()); // or accel font
+                    String text = "CTRL+" + KeyEvent.getKeyText(accel.getKeyCode());
+                    FontMetrics fm = g2.getFontMetrics();
+                    int y = (getHeight() + fm.getAscent() - fm.getDescent()) / 2;
+                    int x = getWidth() - fm.stringWidth(text) - 8;
+                    g2.drawString(text, x, y);
+                    g2.dispose();
+                }
+            }
+        };
+        item.setMnemonic(opt.mnemonic);
+        if (opt.mnemonicIndex != -1) item.setDisplayedMnemonicIndex(opt.mnemonicIndex);
+        item.setAccelerator(KeyStroke.getKeyStroke(opt.mnemonic, KeyEvent.CTRL_DOWN_MASK));
+        item.setBackground(Globals.menuBgColor);
+        item.setBorderPainted(false);
+        item.setForeground(Globals.textColor);
+        item.setFont(Globals.menuFont);
+        item.setPreferredSize(new Dimension(item.getPreferredSize().width + 40, item.getPreferredSize().height));
+
+        // action
+        item.addActionListener(opt.listener);
+        return item;
     }
 }
