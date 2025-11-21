@@ -42,7 +42,7 @@ public class Molecule {
             double radius = Double.parseDouble(parts[1]);
 
             List<Atom> atoms = new ArrayList<>();
-            Molecule mol = new Molecule();
+            Molecule mol = new Molecule(true);
             for (int i = 0; i < numElems; i++) {
                 if (!s.hasNextLine()) {
                     System.err.println("Unexpected format for database file.");
@@ -100,6 +100,7 @@ public class Molecule {
     JScrollBar vScrollbar;
 
     private Molecule savedState;
+    private Molecule parentState = null;
 
     public String molName;
     public double radius;
@@ -107,16 +108,24 @@ public class Molecule {
 
     public boolean changed;
 
+    public Molecule() {
+        this.molName = "";
+        this.radius = 0;
+        this.atoms = new ArrayList<>();
+    }
+
+    public Molecule(boolean save) {
+        this();
+        if (save) savedState = new Molecule();
+        savedState.parentState = this;
+    }
+
     public Molecule(String molName, double radius, List<Atom> atomSpecs) {
         this.molName = molName;
         this.radius = radius;
         this.atoms = atomSpecs;
-    }
-
-    public Molecule() {
-        molName = "";
-        radius = 0;
-        atoms = new ArrayList<>();
+        savedState = new Molecule();
+        savedState.parentState = this;
     }
 
     private void refreshWindow() {
@@ -194,7 +203,7 @@ public class Molecule {
             );
             if (opt == -1) return false;
 
-            Molecule other = DatabaseGUI.getInstance().getMolecules().stream().filter(mol -> mol.molName.equals(molName) && mol != this).findFirst().get();
+            Molecule other = DatabaseGUI.getInstance().getMolecule(molName);
             String selection = options[opt];
             switch (selection) {
                 case "Overwrite":
@@ -226,12 +235,15 @@ public class Molecule {
     }
 
     private Molecule copy() {
-        Molecule mol = new Molecule(molName, radius, new ArrayList<>());
+        Molecule mol = new Molecule();
+        mol.molName = molName;
+        mol.radius = radius;
         List<Atom> atomCopies = new ArrayList<>();
         for (Atom a : atoms) {
             atomCopies.add(new Atom(this, a.name, a.x, a.y, a.z, a.a, a.b, a.c, a.d, a.q, a.mass, a.massless));
         }
         mol.atoms = atomCopies;
+        mol.parentState = this;
         return mol;
     }
     
@@ -450,5 +462,13 @@ public class Molecule {
         SwingUtilities.invokeLater(() -> changed = false);
 
         refreshWindow();
+    }
+
+    public Molecule saved() {
+        return savedState;
+    }
+
+    public Molecule currState() {
+        return savedState == null ? parentState : this;
     }
 }

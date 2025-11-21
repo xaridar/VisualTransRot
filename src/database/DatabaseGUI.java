@@ -233,7 +233,7 @@ public class DatabaseGUI extends JFrame {
     }
 
     public List<String> getMoleculeNames() {
-        return molecules.stream().map(mol -> mol.molName).collect(Collectors.toList());
+        return molecules.stream().map(mol -> mol.saved().molName).collect(Collectors.toList());
     }
 
     public List<Molecule> getMolecules() {
@@ -273,6 +273,7 @@ public class DatabaseGUI extends JFrame {
     private void filterMols() {
         Predicate<Molecule> combinedFilter = filters.stream().reduce(s -> true, Predicate::and);
         sortedList = molecules.stream()
+                .map(Molecule::saved)
                 .filter(combinedFilter)
                 .filter((mol) -> mol.molName.toLowerCase(Locale.ROOT).contains(currSearch.toLowerCase(Locale.ROOT)))
                 .sorted(sorter)
@@ -296,13 +297,13 @@ public class DatabaseGUI extends JFrame {
             iconsPanel.setOpaque(false);
 
             JButton editIcon = Globals.createIconButton("\uF044", Globals.linkColor, Globals.IconSize.MEDIUM, "Edit " + mol.molName, e -> {
-                MoleculeSubframe.openMolFrame(mol);
+                MoleculeSubframe.openMolFrame(mol.currState());
             });
             JButton trashIcon = Globals.createIconButton("\uf00d", Globals.errorColor, Globals.IconSize.MEDIUM, "Remove " + mol.molName, e -> {
                 int msg = JOptionPane.showConfirmDialog(DatabaseGUI.this, "Are you sure you want to delete this molecule?");
                 if (msg == JOptionPane.YES_OPTION) {
                     // remove molecule
-                    removeMolecule(mol);
+                    removeMolecule(mol.currState());
                 }
             });
 
@@ -348,7 +349,7 @@ public class DatabaseGUI extends JFrame {
     }
 
     public Molecule getMolecule(String name) {
-        return molecules.stream().filter(mol -> mol.molName.equals(name)).findFirst().orElse(null);
+        return molecules.stream().map(Molecule::saved).filter(mol -> mol.molName.equals(name)).findFirst().orElse(null);
     }
 
     public void loadFile(String pathName, boolean override) {
@@ -388,10 +389,10 @@ public class DatabaseGUI extends JFrame {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        repaintMols();
+        filterMols();
     }
 
     public String toFile() {
-        return molecules.stream().filter(mol -> mol.atoms.size() > 0).map(Molecule::toString).collect(Collectors.joining("\n"));
+        return molecules.stream().map(Molecule::saved).filter(mol -> mol.atoms.size() > 0).map(Molecule::toString).collect(Collectors.joining("\n"));
     }
 }
