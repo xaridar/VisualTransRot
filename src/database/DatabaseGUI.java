@@ -11,6 +11,7 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.*;
@@ -252,6 +253,13 @@ public class DatabaseGUI extends JFrame {
         setSize(700, 500);
         setResizable(false);
         setLocationRelativeTo(getParent());
+        setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+        addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                closeWindow();
+            }
+        });
 
         // Close window on ESC
         getRootPane().registerKeyboardAction(e -> closeWindow(),
@@ -514,7 +522,7 @@ public class DatabaseGUI extends JFrame {
         try {
             File f = new File(pathName);
             loadFromScanner(new Scanner(f), autoOverride);
-        } catch (IOException e) {
+        } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
     }
@@ -531,10 +539,11 @@ public class DatabaseGUI extends JFrame {
         try (FileWriter writer = new FileWriter(path)) {
             String str = toFile();
             writer.write(str);
-            listeners.forEach(SaveListener::onSave);
-        } catch (IOException e) {
-            e.printStackTrace();
+        } catch (IOException exc) {
+            exc.printStackTrace();
+            return;
         }
+        listeners.forEach(SaveListener::onSave);
         filterMols();
     }
 

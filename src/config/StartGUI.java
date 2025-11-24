@@ -1066,7 +1066,7 @@ public class StartGUI extends JFrame {
         revalidate();
     }
 
-    public void saveSettings(String path, boolean overrideMols) {
+    public void saveSettings(String path) {
         KeyboardFocusManager.getCurrentKeyboardFocusManager().clearGlobalFocusOwner();
         try (FileWriter writer = new FileWriter(path)) {
             // Long list of functions that sorts the list of settings as they are
@@ -1082,16 +1082,11 @@ public class StartGUI extends JFrame {
                             settings.get(Globals.settings.get(i).getName()))) // converts back to setting values
                     .map(entry -> String.format("%s:  %s", entry.getKey(), entry.getValue()))
                         .collect(Collectors.joining("\n")) + "\n";
-            if (!overrideMols) str += selectedMols.keySet().stream().filter(key -> !key.equals("") && selectedMols.get(key) > 0).map(key -> String.format("%s  %d", key, selectedMols.get(key))).collect(Collectors.joining("\n"));
-            else str += DatabaseGUI.getInstance().getMoleculeNames().get(0) + "  " + "1";
+            str += selectedMols.keySet().stream().filter(key -> !key.equals("") && selectedMols.get(key) > 0).map(key -> String.format("%s  %d", key, selectedMols.get(key))).collect(Collectors.joining("\n"));
             writer.write(str);
-        } catch (IOException e) {
-            e.printStackTrace();
+        } catch (IOException exc) {
+            exc.printStackTrace();
         }
-    }
-
-    public void saveSettings(String path) {
-        saveSettings(path, false);
     }
 
     public void createInput(File file) throws IOException {
