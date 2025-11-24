@@ -497,10 +497,15 @@ public class Globals {
     }
 
     public static JButton createIconButton(String icon, Color color, IconSize size, String tooltip, ActionListener listener) {
-        Border defBorder = BorderFactory.createEmptyBorder(5, 5, 5, 5);
+        return createIconButton(icon, false, color, size, tooltip, listener);
+    }
+
+    public static JButton createIconButton(String icon, boolean smallBorder, Color color, IconSize size, String tooltip, ActionListener listener) {
+        int borderSize = smallBorder ? 3 : 5;
+        Border defBorder = BorderFactory.createEmptyBorder(borderSize, borderSize, borderSize, borderSize);
         Border focusedBorder = BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(Color.BLACK),
-                BorderFactory.createEmptyBorder(4, 4, 4, 4)
+                BorderFactory.createEmptyBorder(borderSize - 1, borderSize - 1, borderSize - 1, borderSize - 1)
         );
 
         JButton btn = new JButton(icon);

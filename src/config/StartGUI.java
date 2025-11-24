@@ -48,12 +48,13 @@ public class StartGUI extends JFrame {
     private final Map<JComboBox<String>, JFormattedTextField> currMolDropdowns = new HashMap<>();
     private final Map<JComboBox<String>, JButton> currMolDeleteBtns = new HashMap<>();
     private final Set<String> usedMolNames = new HashSet<>();
-    private JLabel errorLabel;
     String inputFile = "";
     String paramsFile = "";
 
     private JButton fileButtonInp;
+    private JButton inpDeleteIcon;
     private JButton fileButtonParams;
+    private JButton paramsDeleteIcon;
     private JPanel molPanel = null;
 
     private JButton addMolBtn;
@@ -101,22 +102,6 @@ public class StartGUI extends JFrame {
         nameField.setFont(Globals.settingsFontNoBold);
         nameField.setBorder(BorderFactory.createLineBorder(Globals.menuBgColor));
         nameField.setMaximumSize(new Dimension(250, nameField.getPreferredSize().height));
-        nameField.getDocument().addDocumentListener(new DocumentListener() {
-            @Override
-            public void insertUpdate(DocumentEvent e) {
-                setError("");
-            }
-
-            @Override
-            public void removeUpdate(DocumentEvent e) {
-                setError("");
-            }
-
-            @Override
-            public void changedUpdate(DocumentEvent e) {
-                setError("");
-            }
-        });
         namePanel.add(nameField);
         contentPane.add(namePanel);
 
@@ -369,20 +354,21 @@ public class StartGUI extends JFrame {
                     fileChooser.setAcceptAllFileFilterUsed(false);
                     fileChooser.setDialogTitle("Choose an Input.xyz");
 
+                    JPanel btnPanel = new JPanel();
+                    btnPanel.setOpaque(false);
+                    inpDeleteIcon = Globals.createIconButton("\uf00d", true, Globals.textColor, Globals.IconSize.MEDIUM, "Clear Input.xyz", e -> {
+                        setInput(null);
+                    });
+                    inpDeleteIcon.setVisible(false);
                     fileButtonInp = Globals.createTextButton(
                             "Choose Input.xyz...", false, true, Globals.bgColorDark, Globals.btnFontSmall, 5, 3, true, e -> {
-                                setError("");
                                 int out = fileChooser.showOpenDialog(StartGUI.this);
                                 Globals.pref.put("INPUT_PATH", fileChooser.getCurrentDirectory().getAbsolutePath());
                                 fileChooser.setCurrentDirectory(fileChooser.getCurrentDirectory());
                                 if (out == JFileChooser.APPROVE_OPTION) {
-                                    fileNameInp.setText(fileChooser.getSelectedFile().getName());
-                                    fileNameInp.setVisible(true);
-                                    inputFile = fileChooser.getSelectedFile().getAbsolutePath();
+                                    setInput(fileChooser.getSelectedFile());
                                 } else {
-                                    fileNameInp.setText("");
-                                    fileNameInp.setVisible(false);
-                                    inputFile = "";
+                                    setInput(null);
                                 }
                             }
                     );
@@ -393,7 +379,9 @@ public class StartGUI extends JFrame {
                             return Globals.textColorDisabled;
                         }
                     });
-                    settingPanel.add(fileButtonInp);
+                    btnPanel.add(fileButtonInp);
+                    btnPanel.add(inpDeleteIcon);
+                    settingPanel.add(btnPanel);
 
                     fileNameInp = new JLabel();
                     fileNameInp.setFont(Globals.settingsFontNoBold);
@@ -411,7 +399,6 @@ public class StartGUI extends JFrame {
                     settingPanel.add(fileNameInp);
 
                     checkBox.addItemListener(e -> {
-                        setError("");
                         fileButtonInp.setEnabled(checkBox.isSelected());
                         molPanel.setVisible(!checkBox.isSelected());
                         addMolBtn.setVisible(!checkBox.isSelected());
@@ -441,20 +428,21 @@ public class StartGUI extends JFrame {
                     fileChooser.setAcceptAllFileFilterUsed(false);
                     fileChooser.setDialogTitle("Choose an interaction_parameters.txt");
 
+                    JPanel btnPanel = new JPanel();
+                    btnPanel.setOpaque(false);
+                    paramsDeleteIcon = Globals.createIconButton("\uf00d", true, Globals.textColor, Globals.IconSize.MEDIUM, "Clear interaction_params.txt", e -> {
+                        setParams(null);
+                    });
+                    paramsDeleteIcon.setVisible(false);
                     fileButtonParams = Globals.createTextButton(
                             "Choose interaction_params.txt...", false, true, Globals.bgColorDark, Globals.btnFontSmall, 5, 3, true, e -> {
-                                setError("");
                                 int out = fileChooser.showOpenDialog(StartGUI.this);
                                 Globals.pref.put("PARAMS_PATH", fileChooser.getCurrentDirectory().getAbsolutePath());
                                 fileChooser.setCurrentDirectory(fileChooser.getCurrentDirectory());
                                 if (out == JFileChooser.APPROVE_OPTION) {
-                                    fileNameParams.setText(fileChooser.getSelectedFile().getName());
-                                    fileNameParams.setVisible(true);
-                                    paramsFile = fileChooser.getSelectedFile().getAbsolutePath();
+                                    setParams(fileChooser.getSelectedFile());
                                 } else {
-                                    fileNameParams.setText("");
-                                    fileNameParams.setVisible(false);
-                                    paramsFile = "";
+                                    setParams(null);
                                 }
                             }
                     );
@@ -483,7 +471,6 @@ public class StartGUI extends JFrame {
                     settingPanel.add(fileNameParams);
 
                     checkBox.addItemListener(e -> {
-                        setError("");
                         fileButtonParams.setEnabled(checkBox.isSelected());
                         fileNameParams.setVisible(checkBox.isSelected() && paramsFile.length() > 0);
                     });
@@ -507,7 +494,6 @@ public class StartGUI extends JFrame {
 
         // add molecule count btn
         addMolBtn = Globals.createIconButton("\u002B", Globals.textColor, Globals.IconSize.EXTRA_LARGE, "Add molecule count", e -> {
-            setError("");
             addMolSelector("", 0);
 
             // disable the delete button for a single element; should only be no selectors when the database is empty
@@ -521,9 +507,8 @@ public class StartGUI extends JFrame {
         // Start Button
         JButton startBtn = Globals.createButton("Start Simulation", Globals.btnFont, 40, 25, 8, e -> {
             String name = nameField.getText();
-            setError("");
             if (name.length() > 0 && ProcessManager.getInstance().nameExists(name)) {
-                setError("Name is not unique.");
+                showError("Name is not unique.", "Name Has Been Used");
                 return;
             }
 
@@ -540,7 +525,7 @@ public class StartGUI extends JFrame {
                 int ptCount, numMols;
                 if ((boolean) settings.get("Choose All Interaction Parameters")) {
                     if (paramsFile.length() == 0) {
-                        setError("Please select an interaction_params.txt file or deselect 'Choose All Interaction Parameters'");
+                        showError("Please select an interaction_params.txt file or deselect 'Choose All Interaction Parameters'", "Missing Interaction Parameters File");
                         return;
                     }
                     arguments.add("-p");
@@ -549,7 +534,7 @@ public class StartGUI extends JFrame {
 
                 if ((boolean) settings.get("Use Input.xyz")) {
                     if (inputFile.length() == 0) {
-                        setError("Please select an Input.xyz file or deselect 'Use Input.xyz'");
+                        showError("Please select an Input.xyz file or deselect 'Use Input.xyz'", "Missing Input File");
                         return;
                     }
                     arguments.add("-i");
@@ -562,13 +547,13 @@ public class StartGUI extends JFrame {
                         String line2 = s.nextLine().replaceFirst("Energy: -?\\d*.?\\d* Kcal/mole", "");
                         if (!line2.trim().matches("^(\\d *.*?)( | \\d *.*?)*$")) throw new NumberFormatException();
                         numMols = line2.trim().split(" ").length; // TODO: wrong
-                    } catch (NumberFormatException | FileNotFoundException exc) {
-                        setError("Invalid input file!");
+                    } catch (NumberFormatException | FileNotFoundException | NoSuchElementException exc) {
+                        showError("Invalid input file!", "Invalid Input File");
                         return;
                     }
                 } else if (selectedMols.entrySet().stream().filter(kv -> !kv.getKey().equals("") && kv.getValue() > 0).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)).size() == 0) {
                     // only checks the valid molecule counts
-                    setError("You cannot run a simulation with no molecules.");
+                    showError("You cannot run a simulation with no molecules.", "Please Add Molecules");
                     return;
                 } else {
                     ptCount = selectedMols.entrySet().stream().filter(kv -> !kv.getKey().equals("") && kv.getValue() > 0).mapToInt(kv -> DatabaseGUI.getInstance().getMolecule(kv.getKey()).atoms.size() * kv.getValue()).sum();
@@ -589,6 +574,34 @@ public class StartGUI extends JFrame {
         btnPanel.revalidate();
         contentPane.add(Box.createRigidArea(new Dimension(0, 10)));
         contentPane.add(btnPanel);
+    }
+
+    private void setInput(File selectedFile) {
+        if (selectedFile == null) {
+            fileNameInp.setText("");
+            fileNameInp.setVisible(false);
+            inpDeleteIcon.setVisible(false);
+            inputFile = "";
+        } else {
+            fileNameInp.setText(selectedFile.getName());
+            fileNameInp.setVisible(true);
+            inpDeleteIcon.setVisible(true);
+            inputFile = selectedFile.getAbsolutePath();
+        }
+    }
+
+    private void setParams(File selectedFile) {
+        if (selectedFile == null) {
+            fileNameParams.setText("");
+            fileNameParams.setVisible(false);
+            paramsDeleteIcon.setVisible(false);
+            paramsFile = "";
+        } else {
+            fileNameParams.setText(selectedFile.getName());
+            fileNameParams.setVisible(true);
+            paramsDeleteIcon.setVisible(true);
+            paramsFile = selectedFile.getAbsolutePath();
+        }
     }
 
     private void clearMolSelectors() {
@@ -930,14 +943,6 @@ public class StartGUI extends JFrame {
         drawTitle();
         drawSettings();
 
-        errorLabel = new JLabel("", SwingConstants.CENTER);
-        errorLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-        errorLabel.setForeground(Globals.errorColor);
-        errorLabel.setFont(Globals.btnFont);
-        errorLabel.setBorder(BorderFactory.createEmptyBorder(6, 0, 6, 0));
-        contentPane.add(errorLabel);
-
-
         setVisible(true);
         setResizable(false);
 
@@ -1060,10 +1065,8 @@ public class StartGUI extends JFrame {
         molCounts.forEach(this::addMolSelector);
     }
 
-    private void setError(String s) {
-        errorLabel.setText(s);
-        repaint();
-        revalidate();
+    private void showError(String s, String title) {
+        JOptionPane.showMessageDialog(this, s, title, JOptionPane.ERROR_MESSAGE, null);
     }
 
     public void saveSettings(String path) {
