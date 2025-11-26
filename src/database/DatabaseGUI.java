@@ -252,8 +252,8 @@ public class DatabaseGUI extends JFrame {
         });
         clearBtn.setMaximumSize(clearBtn.getPreferredSize());
         addBtn.setMaximumSize(addBtn.getPreferredSize());
-        btnPanel.add(clearBtn);
         btnPanel.add(addBtn);
+        btnPanel.add(clearBtn);
         fullPanel.add(btnPanel, BorderLayout.SOUTH);
 
         setContentPane(fullPanel);
