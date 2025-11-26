@@ -69,7 +69,7 @@ public class DatabaseGUI extends JFrame {
         titleLabel.setForeground(Globals.textColor);
         titleLabel.setFont(Globals.titleFontSmall);
         titleLabel.setAlignmentX(JComponent.CENTER_ALIGNMENT);
-        titleLabel.setBorder(BorderFactory.createEmptyBorder(10, 0, 8, 0));
+        titleLabel.setBorder(BorderFactory.createEmptyBorder(6, 0, 8, 0));
         topPanel.add(titleLabel);
 
         JPanel searchPanel = new JPanel();
@@ -245,8 +245,15 @@ public class DatabaseGUI extends JFrame {
                 saveDB(Globals.dbPath);
             }
         });
+        JButton addBtn = Globals.createButton("Add Molecule", Globals.btnFont, 25, 16, 8, e -> {
+            Molecule m = new Molecule(true);
+            molecules.add(m);
+            MoleculeSubframe.openMolFrame(m);
+        });
         clearBtn.setMaximumSize(clearBtn.getPreferredSize());
+        addBtn.setMaximumSize(addBtn.getPreferredSize());
         btnPanel.add(clearBtn);
+        btnPanel.add(addBtn);
         fullPanel.add(btnPanel, BorderLayout.SOUTH);
 
         setContentPane(fullPanel);
