@@ -32,7 +32,7 @@ import java.util.stream.Collectors;
 public class StartGUI extends JFrame {
 
     private static StartGUI Instance;
-    private JLabel fixLabel = new JLabel();
+    private final JLabel fixLabel = new JLabel();
 
     public static StartGUI getInstance() {
         if (Instance == null) Instance = new StartGUI();
@@ -62,6 +62,8 @@ public class StartGUI extends JFrame {
     private String outputFilepath;
     private JLabel fileNameInp;
     private JLabel fileNameParams;
+
+    private boolean saved;
 
     private StartGUI() {
         super(Globals.appName);
@@ -235,16 +237,19 @@ public class StartGUI extends JFrame {
                     @Override
                     public void insertUpdate(DocumentEvent e) {
                         settings.put(setting.getName(), textField.getValue());
+                        saved = false;
                     }
 
                     @Override
                     public void removeUpdate(DocumentEvent e) {
                         settings.put(setting.getName(), textField.getValue());
+                        saved = false;
                     }
 
                     @Override
                     public void changedUpdate(DocumentEvent e) {
                         settings.put(setting.getName(), textField.getValue());
+                        saved = false;
                     }
                 });
 
@@ -289,6 +294,7 @@ public class StartGUI extends JFrame {
                 // enable / disable dependent settings
                 checkBox.addItemListener(e -> {
                     settings.put(setting.getName(), checkBox.isSelected());
+                    saved = false;
                     try {
                         fields.entrySet().stream()
                                 .map(entry -> new Tuple<>(Globals.settings.stream().filter(s -> s.getName().equals(entry.getKey())).findFirst().get(), entry.getValue()))
@@ -720,16 +726,19 @@ public class StartGUI extends JFrame {
             @Override
             public void insertUpdate(DocumentEvent e) {
                 selectedMols.put((String) comboBox.getSelectedItem(), ((Long) textField.getValue()).intValue());
+                saved = false;
             }
 
             @Override
             public void removeUpdate(DocumentEvent e) {
                 selectedMols.put((String) comboBox.getSelectedItem(), ((Long) textField.getValue()).intValue());
+                saved = false;
             }
 
             @Override
             public void changedUpdate(DocumentEvent e) {
                 selectedMols.put((String) comboBox.getSelectedItem(), ((Long) textField.getValue()).intValue());
+                saved = false;
             }
         });
         
@@ -738,12 +747,14 @@ public class StartGUI extends JFrame {
                 if (!usedMolNames.contains((String) e.getItem())) return;
                 usedMolNames.remove((String) e.getItem());
                 selectedMols.remove((String) e.getItem());
+                saved = false;
             } else if (e.getStateChange() == ItemEvent.SELECTED && !e.getItem().equals("")) {
                 if (usedMolNames.contains((String) e.getItem())) return;
                 usedMolNames.add((String) e.getItem());
                 selectedMols.put((String) e.getItem(), ((Long) textField.getValue()).intValue());
+                saved = false;
             }
-            molPanel.setVisible(usedMolNames.size() < DatabaseGUI.getInstance().getMoleculeNames().size());
+            molPanel.setVisible(usedMolNames.size() > 0);
             addMolBtn.setEnabled(usedMolNames.size() < DatabaseGUI.getInstance().getMoleculeNames().size());
             for (JComboBox<String> cb : currMolDropdowns.keySet()) {
                 if (cb == comboBox)
@@ -755,6 +766,7 @@ public class StartGUI extends JFrame {
             comboBox.setSelectedItem(selected);
             usedMolNames.add(selected);
             selectedMols.put(selected, value);
+            saved = false;
         } else
             comboBox.setSelectedIndex(0);
 
@@ -766,7 +778,8 @@ public class StartGUI extends JFrame {
             currMolDropdowns.remove(comboBox);
             currMolDeleteBtns.remove(comboBox);
             selectedMols.remove((String) comboBox.getSelectedItem());
-            molPanel.setVisible(usedMolNames.size() < DatabaseGUI.getInstance().getMoleculeNames().size());
+            saved = false;
+            molPanel.setVisible(usedMolNames.size() > 0);
             addMolBtn.setEnabled(usedMolNames.size() < DatabaseGUI.getInstance().getMoleculeNames().size());
             for (JComboBox<String> cb : currMolDropdowns.keySet()) {
                 updateMolComboBox(cb);
@@ -927,7 +940,7 @@ public class StartGUI extends JFrame {
 
         DatabaseGUI.getInstance().loadFile(Globals.dbPath, true);
         DatabaseGUI.getInstance().addSaveListener(() -> {
-            molPanel.setVisible(usedMolNames.size() < DatabaseGUI.getInstance().getMoleculeNames().size());
+            molPanel.setVisible(usedMolNames.size() > 0);
             addMolBtn.setEnabled(usedMolNames.size() < DatabaseGUI.getInstance().getMoleculeNames().size());
             if (currMolDropdowns.size() == 0 && DatabaseGUI.getInstance().getMolecules().size() > 0) {
                 addMolSelector("", 0);
@@ -950,26 +963,30 @@ public class StartGUI extends JFrame {
 
         // disable the delete button for a single element; should only be no selectors when the database is empty
         currMolDeleteBtns.values().forEach(v -> v.setEnabled(currMolDeleteBtns.size() != 1));
+        saved = true;
     }
 
     private void closeWindow() {
-        int msg = JOptionPane.showOptionDialog(this,
-                String.format("Do you want to save your current settings for next time you open %s?", Globals.appName),                         
-                "Save Settings?", 
-                JOptionPane.YES_NO_OPTION, 
-                JOptionPane.QUESTION_MESSAGE,
-                null,
-                null,
-                null);
-        if (msg == JOptionPane.YES_OPTION) {
-            saveSettings(Globals.configPath);
-            System.exit(1);
-        } else if (msg == JOptionPane.NO_OPTION) {
-            System.exit(1);
-        }
+        if (!saved) {
+            int msg = JOptionPane.showOptionDialog(this,
+                    String.format("Do you want to save your current settings for next time you open %s?", Globals.appName),
+                    "Save Settings?",
+                    JOptionPane.YES_NO_OPTION,
+                    JOptionPane.QUESTION_MESSAGE,
+                    null,
+                    null,
+                    null);
+            if (msg == JOptionPane.YES_OPTION) {
+                saveSettings(Globals.configPath);
+                System.exit(1);
+            } else if (msg == JOptionPane.NO_OPTION) {
+                System.exit(1);
+            }
+        } else System.exit(1);
     }
 
     public void populateSettings(String path) {
+        clearMolSelectors();
         File valsFile = new File(path);
         try (Scanner s = new Scanner(valsFile)) {
             while (s.hasNextLine()) {
@@ -1016,12 +1033,15 @@ public class StartGUI extends JFrame {
                     .findFirst();
             if (constraintObj.isEmpty()) continue;
             SwingUtilities.invokeLater(() -> {
+                boolean state = saved;
                 boolean selected = (boolean) settings.get(entry.getKey());
                 if (selected) entry.getValue().setSelected(true);
-                else
+                else {
                     for (ItemListener itemListener : entry.getValue().getItemListeners()) {
                         itemListener.itemStateChanged(new ItemEvent(entry.getValue(), ItemEvent.ITEM_STATE_CHANGED, entry.getValue(), ItemEvent.DESELECTED));
                     }
+                }
+                saved = state;
             });
         }
 
@@ -1034,6 +1054,7 @@ public class StartGUI extends JFrame {
         
         fileButtonInp.setEnabled((boolean) settings.get("Use Input.xyz"));
         fileButtonParams.setEnabled((boolean) settings.get("Choose All Interaction Parameters"));
+        saved = false;
     }
 
     public void populateSettings(Map<String, Object> settings, Map<String, Integer> molCounts) {
@@ -1063,6 +1084,7 @@ public class StartGUI extends JFrame {
 
         clearMolSelectors();
         molCounts.forEach(this::addMolSelector);
+        saved = false;
     }
 
     private void showError(String s, String title) {
@@ -1087,6 +1109,7 @@ public class StartGUI extends JFrame {
                         .collect(Collectors.joining("\n")) + "\n";
             str += selectedMols.keySet().stream().filter(key -> !key.equals("") && selectedMols.get(key) > 0).map(key -> String.format("%s  %d", key, selectedMols.get(key))).collect(Collectors.joining("\n"));
             writer.write(str);
+            saved = true;
         } catch (IOException exc) {
             exc.printStackTrace();
         }

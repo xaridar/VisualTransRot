@@ -33,7 +33,7 @@ public class MoleculeSubframe extends JFrame {
         molFrames.remove(mol);
     }
 
-    private Molecule mol;
+    private final Molecule mol;
 
     private MoleculeSubframe(Molecule mol) {
         this.mol = mol;

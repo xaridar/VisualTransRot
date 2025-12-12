@@ -30,9 +30,6 @@ public class DatabaseGUI extends JFrame {
     }
 
     // options for database loading
-    public static final int FILE = 0;
-    public static final int TEXT = 1;
-
     public static final int REPLACE = 0;
     public static final int APPEND = 1;
     public static final int APPEND_OLD = 2;
@@ -43,11 +40,11 @@ public class DatabaseGUI extends JFrame {
     private final List<Molecule> molecules = new ArrayList<>();
     private List<Molecule> sortedList = new ArrayList<>();
 
-    private JPanel molPanel;
+    private final JPanel molPanel;
 
     private String currSearch = "";
     private MoleculeSorter sorter = MoleculeSorter.DefaultSorter;
-    private List<Predicate<Molecule>> filters = new ArrayList<>();
+    private final List<Predicate<Molecule>> filters = new ArrayList<>();
 
     private DatabaseGUI() {
         super(Globals.appName + " - Database");
