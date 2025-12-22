@@ -1,9 +1,7 @@
 package database;
 
 import java.awt.*;
-import java.awt.event.KeyAdapter;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 import java.math.BigDecimal;
 import java.text.DecimalFormat;
 import java.util.Comparator;
@@ -13,6 +11,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import javax.swing.plaf.metal.MetalComboBoxButton;
 import javax.swing.plaf.metal.MetalComboBoxIcon;
 import javax.swing.plaf.metal.MetalComboBoxUI;
@@ -74,7 +73,7 @@ public class Atom {
         gbc.fill = GridBagConstraints.NONE;
 
         panel.setOpaque(false);
-        panel.setBorder(BorderFactory.createEmptyBorder(3, 50, 0, 50));
+        panel.setBorder(BorderFactory.createEmptyBorder(4, 5, 1, 5));
         
         // dropdown - all elements are
         // available as dropdown options, or massless elements can be customized
@@ -264,87 +263,95 @@ public class Atom {
         gbc.gridx++;
         panel.add(Box.createRigidArea(new Dimension(32, 0)));
         
-        JPanel xPanel = getStatPanel("x", x, dbl -> x = dbl, true);
+        JPanel xPanel = getStatPanel("x", x, dbl -> {
+            x = dbl;
+            mol.changed = true;
+        }, true);
         panel.add(xPanel, gbc);
         gbc.gridx++;
 
-        JPanel yPanel = getStatPanel("y", y, dbl -> y = dbl, true);
+        JPanel yPanel = getStatPanel("y", y, dbl -> {
+            y = dbl;
+            mol.changed = true;
+        }, true);
         panel.add(yPanel, gbc);
         gbc.gridx++;
 
-        JPanel zPanel = getStatPanel("z", z, dbl -> z = dbl, true);
+        JPanel zPanel = getStatPanel("z", z, dbl -> {
+            z = dbl;
+            mol.changed = true;
+        }, true);
         panel.add(zPanel, gbc);
         gbc.gridx++;
 
-        JPanel aPanel = getStatPanel("a", a, dbl -> a = dbl, true);
+        JPanel aPanel = getStatPanel("a", a, dbl -> {
+            a = dbl;
+            mol.changed = true;
+        }, true);
         panel.add(aPanel, gbc);
         gbc.gridx++;
 
-        JPanel bPanel = getStatPanel("b", b, dbl -> b = dbl, true);
+        JPanel bPanel = getStatPanel("b", b, dbl -> {
+            b = dbl;
+            mol.changed = true;
+        }, true);
         panel.add(bPanel, gbc);
         gbc.gridx++;
 
-        JPanel cPanel = getStatPanel("c", c, dbl -> c = dbl, true);
+        JPanel cPanel = getStatPanel("c", c, dbl -> {
+            c = dbl;
+            mol.changed = true;
+        }, true);
         panel.add(cPanel, gbc);
         gbc.gridx++;
 
-        JPanel dPanel = getStatPanel("d", d, dbl -> d = dbl, true);
+        JPanel dPanel = getStatPanel("d", d, dbl -> {
+            d = dbl;
+            mol.changed = true;
+        }, true);
         panel.add(dPanel, gbc);
         gbc.gridx++;
 
-        JPanel qPanel = getStatPanel("q", q, dbl -> q = dbl, true);
+        JPanel qPanel = getStatPanel("q", q, dbl -> {
+            q = dbl;
+            mol.changed = true;
+        }, true);
         panel.add(qPanel, gbc);
         gbc.gridx++;
 
-        JPanel massPanel = getStatPanel("mass", mass, dbl -> mass = dbl, false);
+        JPanel massPanel = getStatPanel("mass", mass, dbl -> {
+            mass = dbl;
+            mol.changed = true;
+        }, false);
         panel.add(massPanel, gbc);
         gbc.gridx++;
 
-        JLabel trashIcon = new JLabel("\uf00d");
-        trashIcon.setFont(Globals.iconFont);
-        trashIcon.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        trashIcon.setForeground(Globals.textColor);
-        trashIcon.setFocusable(true);
-        trashIcon.addMouseListener(new MouseAdapter() {
-            public void mouseClicked(MouseEvent e) {
-                if (e.getButton() != MouseEvent.BUTTON1) return;
-                int msg = JOptionPane.showConfirmDialog(panel.getParent().getParent(), "Are you sure you want to delete this atom?");
-                if (msg == JOptionPane.YES_OPTION) {
-                    mol.removeAtom(Atom.this);
-                }
-            }
+        JButton delIcon = Globals.createIconButton("\uF00D", Globals.errorColor, Globals.IconSize.MEDIUM, "Remove " + name, e -> {
+            mol.removeAtom(this);
         });
-        trashIcon.setToolTipText("Remove " + name);
+        delIcon.setAlignmentY(Component.CENTER_ALIGNMENT);
 
-        panel.add(trashIcon, gbc);
+        panel.add(delIcon, gbc);
 
         JPanel retPanel = new JPanel();
         retPanel.setLayout(new BoxLayout(retPanel, BoxLayout.Y_AXIS));
         retPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
         retPanel.setOpaque(false);
-        JLabel cdLabel = new JLabel("<html><u>Calculate C & D</u></html>");
-        cdLabel.setFont(Globals.btnFontSmaller);
-        cdLabel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        cdLabel.setBorder(BorderFactory.createEmptyBorder(4, 0, 4, 0));
-        cdLabel.setForeground(Globals.linkColor);
-        cdLabel.setFocusable(true);
-        cdLabel.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                SigmaEpsilonDialog sed = new SigmaEpsilonDialog();
-                int result = JOptionPane.showConfirmDialog(DatabaseGUI.getInstance(), sed, "Calculate C & D", JOptionPane.OK_CANCEL_OPTION);
-                if (result == JOptionPane.YES_OPTION) {
-                    double sigmaSix = Math.pow(sed.getSigma(), 6);
-                    double c = 4 * sed.getEpsilon() * sigmaSix;
-                    double d = c * sigmaSix;
 
-                    cField.setValue(new BigDecimal(c));
-                    dField.setValue(new BigDecimal(d));
-                }
+        JButton cdBtn = Globals.createLinkButton("Calculate C & D", Globals.btnFontSmaller, 5, 3, true, e -> {
+            SigmaEpsilonDialog sed = new SigmaEpsilonDialog();
+            int result = JOptionPane.showConfirmDialog(retPanel.getParent(), sed, "Calculate C & D", JOptionPane.OK_CANCEL_OPTION);
+            if (result == JOptionPane.YES_OPTION) {
+                double sigmaSix = Math.pow(sed.getSigma(), 6);
+                double c = 4 * sed.getEpsilon() * sigmaSix;
+                double d = c * sigmaSix;
+
+                cField.setValue(new BigDecimal(c));
+                dField.setValue(new BigDecimal(d));
             }
         });
         retPanel.add(panel);
-        retPanel.add(cdLabel);
+        retPanel.add(cdBtn);
 
         return retPanel;
     }

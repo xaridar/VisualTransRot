@@ -1,13 +1,7 @@
 package util;
 
-import java.awt.Color;
-import java.awt.Cursor;
-import java.awt.Font;
-import java.awt.event.ActionListener;
-import java.awt.event.FocusEvent;
-import java.awt.event.FocusListener;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import java.awt.*;
+import java.awt.event.*;
 import java.io.File;
 import java.io.UnsupportedEncodingException;
 import java.net.URL;
@@ -24,12 +18,12 @@ import java.util.Optional;
 import java.util.prefs.Preferences;
 import java.util.stream.Collectors;
 
-import javax.swing.BorderFactory;
-import javax.swing.JButton;
+import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.plaf.metal.MetalButtonUI;
 
 import config.Constraint;
+import config.MenuOption;
 
 public class Globals {
 
@@ -121,13 +115,17 @@ public class Globals {
     public static Preferences pref;
 
     public static Font titleFont = new Font(Font.MONOSPACED, Font.BOLD, 64);
+    public static Font titleFontSmall = new Font(Font.MONOSPACED, Font.BOLD, 40);
     public static Font btnFont = new Font(Font.MONOSPACED, Font.BOLD, 18);
     public static Font btnFontSmall = new Font(Font.MONOSPACED, Font.BOLD, 12);
     public static Font btnFontSmaller = new Font(Font.MONOSPACED, Font.BOLD, 11);
     public static Font menuFont = new Font(Font.MONOSPACED, Font.BOLD, 14);
     public static Font settingsFont = new Font(Font.SANS_SERIF, Font.BOLD, 12);
     public static Font settingsFontNoBold = new Font(Font.MONOSPACED, Font.PLAIN, 12);
-    public static Font iconFont;
+    public static Font iconFontS;
+    public static Font iconFontM;
+    public static Font iconFontL;
+    public static Font iconFontXL;
 
     public static Color bgColor = new Color(230, 246, 255);
     public static Color bgColorDark = Color.LIGHT_GRAY;
@@ -138,6 +136,7 @@ public class Globals {
     public static Color accentColor = new Color(37, 120, 143);
     public static Color accentColorLight = new Color(144, 216, 255);
     public static Color accentColorDark = new Color(23, 76, 89);
+    public static Color tertiaryColor = new Color(0, 178, 178);
     public static Color linkColor = new Color(17, 60, 205);
     public static Color linkColorAlt = new Color(122, 87, 219);
     public static Color errorColor = new Color(161, 0, 0);
@@ -355,32 +354,33 @@ public class Globals {
     }
 
     public static JButton createButton(String text, Font font, int rounding, int padX, int padY, ActionListener listener) {
-        return createButton(text, Globals.bgColor, font, rounding, padX, padY, listener);
+        return createButton(text, bgColor, null, null, null, font, rounding, padX, padY, listener);
     }
 
-    public static JButton createButton(String text, Color bgColor, Font font, int rounding, int padX, int padY, ActionListener listener) {
+    public static JButton createButton(String text, Color bgColor, Color buttonColor, Color buttonColorDark, Color textColor, Font font, int rounding, int padX, int padY, ActionListener listener) {
+        Border defBorder = BorderFactory.createCompoundBorder(
+                new RoundedBorder(bgColor, 2, rounding),
+                BorderFactory.createEmptyBorder(padY, padX, padY, padX)
+        );
+        Border focusedBorder = BorderFactory.createCompoundBorder(
+                new RoundedBorder(bgColor, 2, rounding),
+                BorderFactory.createCompoundBorder(
+                        BorderFactory.createLineBorder(Color.BLACK),
+                        BorderFactory.createEmptyBorder(padY - 1, padX - 1, padY - 1, padX - 1)
+                )
+        );
+
         JButton btn = new JButton(text);
         btn.setFont(font);
-        btn.setBackground(Globals.accentColor);
-        btn.setForeground(Globals.accentColorLight);
+        btn.setBackground(buttonColor != null ? buttonColor : accentColor);
+        btn.setForeground(textColor != null ? textColor : accentColorLight);
         btn.addActionListener(listener);
         btn.setUI(new MetalButtonUI() {
             @Override
             protected Color getSelectColor() {
-                return Globals.menuBgColor;
+                return buttonColor != null ? buttonColorDark : accentColorDark;
             }
         });
-        Border defBorder = BorderFactory.createCompoundBorder(
-            new RoundedBorder(bgColor, 2, rounding),
-            BorderFactory.createEmptyBorder(padY, padX, padY, padX)
-        );
-        Border focusedBorder = BorderFactory.createCompoundBorder(
-            new RoundedBorder(bgColor, 2, rounding),
-            BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(Color.BLACK),
-                BorderFactory.createEmptyBorder(padY - 1, padX - 1, padY - 1, padX - 1)
-            )
-        );
         btn.setBorder(defBorder);
         btn.setFocusPainted(false);
         btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
@@ -395,21 +395,229 @@ public class Globals {
             public void focusLost(FocusEvent e) {
                 btn.setBorder(defBorder);
             }
-            
+
         });
         btn.addMouseListener(new MouseAdapter() {
 
             @Override
             public void mouseEntered(MouseEvent e) {
-                btn.setBackground(Globals.accentColorDark);
+                btn.setBackground(buttonColor != null ? buttonColorDark : accentColorDark);
             }
 
             @Override
             public void mouseExited(MouseEvent e) {
-                btn.setBackground(Globals.accentColor);
+                btn.setBackground(buttonColor != null ? buttonColor : accentColor);
             }
-            
+
         });
         return btn;
+    }
+
+    public static JButton createLinkButton(String text, Font font, int padX, int padY, boolean noStretch, ActionListener listener) {
+        return createTextButton(text, true, false, bgColor, font, padX, padY, noStretch, listener);
+    }
+
+    public static JButton createLinkButton(String text, Font font, int padX, int padY, boolean noStretch, Color overrideColor, ActionListener listener) {
+        JButton btn = createTextButton(text, true, false, bgColor, font, padX, padY, noStretch, listener, false);
+        btn.setForeground(overrideColor);
+        return btn;
+    }
+
+    private static JButton createTextButton(String text, boolean underline, boolean opaque, Color bgColor, Font font, int padX, int padY, boolean noStretch, ActionListener listener, boolean hasColorChange) {
+        Border defBorder = BorderFactory.createEmptyBorder(padY, padX, padY, padX);
+        Border focusedBorder = BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(Color.BLACK),
+                BorderFactory.createEmptyBorder(padY - 1, padX - 1, padY - 1, padX - 1)
+        );
+
+        JButton btn = new JButton(underline ? String.format("<html><u>%s</u></html>", text) : text);
+        btn.setFont(font);
+        btn.setBackground(bgColor);
+        btn.setOpaque(opaque);
+        btn.setForeground(linkColor);
+        btn.addActionListener(listener);
+        btn.setUI(new MetalButtonUI() {
+            @Override
+            protected Color getSelectColor() {
+                return accentColorLight;
+            }
+        });
+        btn.setBorder(defBorder);
+        btn.setFocusPainted(false);
+        btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        if (noStretch) {
+            btn.setMaximumSize(btn.getPreferredSize());
+        }
+        btn.setAlignmentX(JComponent.CENTER_ALIGNMENT);
+        btn.addFocusListener(new FocusListener() {
+
+            @Override
+            public void focusGained(FocusEvent e) {
+                btn.setBorder(focusedBorder);
+            }
+
+            @Override
+            public void focusLost(FocusEvent e) {
+                btn.setBorder(defBorder);
+            }
+
+        });
+        if (hasColorChange) btn.addMouseListener(new MouseAdapter() {
+
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                btn.setForeground(linkColorAlt);
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+                btn.setForeground(linkColor);
+            }
+
+        });
+        return btn;
+    }
+
+    public static JButton createTextButton(String text, boolean underline, boolean opaque, Color bgColor, Font font, int padX, int padY, boolean noStretch, ActionListener listener) {
+        return createTextButton(text, underline, opaque, bgColor, font, padX, padY, noStretch, listener, true);
+    }
+
+    public enum IconSize {
+        SMALL(iconFontS), MEDIUM(iconFontM), LARGE(iconFontL), EXTRA_LARGE(iconFontXL);
+
+        private Font f;
+
+        IconSize(Font f) {
+            this.f = f;
+        }
+
+        public Font getFont() {
+            return f;
+        }
+    }
+
+    public static JButton createIconButton(String icon, Color color, IconSize size, String tooltip, ActionListener listener) {
+        return createIconButton(icon, false, color, size, tooltip, listener);
+    }
+
+    public static JButton createIconButton(String icon, boolean smallBorder, Color color, IconSize size, String tooltip, ActionListener listener) {
+        int borderSize = smallBorder ? 3 : 5;
+        Border defBorder = BorderFactory.createEmptyBorder(borderSize, borderSize, borderSize, borderSize);
+        Border focusedBorder = BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(Color.BLACK),
+                BorderFactory.createEmptyBorder(borderSize - 1, borderSize - 1, borderSize - 1, borderSize - 1)
+        );
+
+        JButton btn = new JButton(icon);
+        btn.setFont(size.getFont());
+        btn.setBackground(bgColor);
+        btn.setOpaque(false);
+        btn.setForeground(color);
+        btn.addActionListener(listener);
+        btn.setBorder(defBorder);
+        btn.setFocusPainted(false);
+        btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        btn.setToolTipText(tooltip);
+        btn.addFocusListener(new FocusListener() {
+
+            @Override
+            public void focusGained(FocusEvent e) {
+                btn.setBorder(focusedBorder);
+            }
+
+            @Override
+            public void focusLost(FocusEvent e) {
+                btn.setBorder(defBorder);
+            }
+
+        });
+        btn.addMouseListener(new MouseAdapter() {
+
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                btn.setForeground(color.darker());
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+                btn.setForeground(color);
+            }
+
+        });
+        return btn;
+    }
+
+    public static JMenu createMenuOption(MenuOption opt) {
+        return createMenuOption(opt, false);
+    }
+
+    public static JMenu createMenuOption(MenuOption opt, boolean nested) {
+        JMenu menu = new JMenu(opt.name);
+        menu.setMnemonic(opt.mnemonic);
+        menu.setBorderPainted(false);
+        menu.setForeground(Globals.textColor);
+        menu.setFont(Globals.menuFont);
+        menu.setOpaque(true);
+        menu.setBackground(!nested ? Globals.bgColor : Globals.menuBgColor);
+        menu.addMouseListener(new MouseAdapter() {
+
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                menu.setBackground(Globals.bgColorDark);
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+                menu.setBackground(!nested ? Globals.bgColor : Globals.menuBgColor);
+            }
+
+        });
+        JPopupMenu popupMenu = menu.getPopupMenu();
+        popupMenu.setBorder(BorderFactory.createEmptyBorder());
+
+        for (MenuOption subopt : opt.suboptions) {
+            JComponent item;
+            if (subopt.suboptions != null) item = createMenuOption(subopt, true);
+            else item = createSubOption(subopt);
+            menu.add(item);
+        }
+
+        return menu;
+    }
+
+    private static JMenuItem createSubOption(MenuOption opt) {
+        JMenuItem item = new JMenuItem(opt.name) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                KeyStroke accel = getAccelerator();
+                setAccelerator(null);
+                super.paintComponent(g);
+                setAccelerator(accel);
+
+                if (accel != null) {
+                    Graphics2D g2 = (Graphics2D) g.create();
+                    g2.setColor(Globals.textColor);
+                    g2.setFont(getFont()); // or accel font
+                    String text = "CTRL+" + KeyEvent.getKeyText(accel.getKeyCode());
+                    FontMetrics fm = g2.getFontMetrics();
+                    int y = (getHeight() + fm.getAscent() - fm.getDescent()) / 2;
+                    int x = getWidth() - fm.stringWidth(text) - 8;
+                    g2.drawString(text, x, y);
+                    g2.dispose();
+                }
+            }
+        };
+        item.setMnemonic(opt.mnemonic);
+        if (opt.mnemonicIndex != -1) item.setDisplayedMnemonicIndex(opt.mnemonicIndex);
+        item.setAccelerator(KeyStroke.getKeyStroke(opt.mnemonic, KeyEvent.CTRL_DOWN_MASK));
+        item.setBackground(Globals.menuBgColor);
+        item.setBorderPainted(false);
+        item.setForeground(Globals.textColor);
+        item.setFont(Globals.menuFont);
+        item.setPreferredSize(new Dimension(item.getPreferredSize().width + 40, item.getPreferredSize().height));
+
+        // action
+        item.addActionListener(opt.listener);
+        return item;
     }
 }

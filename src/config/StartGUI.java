@@ -32,7 +32,7 @@ import java.util.stream.Collectors;
 public class StartGUI extends JFrame {
 
     private static StartGUI Instance;
-    private JLabel fixLabel = new JLabel();
+    private final JLabel fixLabel = new JLabel();
 
     public static StartGUI getInstance() {
         if (Instance == null) Instance = new StartGUI();
@@ -46,13 +46,15 @@ public class StartGUI extends JFrame {
     private final Map<String, JCheckBox> checks = new HashMap<>();
     private final Map<String, Integer> selectedMols = new LinkedHashMap<>();
     private final Map<JComboBox<String>, JFormattedTextField> currMolDropdowns = new HashMap<>();
+    private final Map<JComboBox<String>, JButton> currMolDeleteBtns = new HashMap<>();
     private final Set<String> usedMolNames = new HashSet<>();
-    private JLabel errorLabel;
     String inputFile = "";
     String paramsFile = "";
 
     private JButton fileButtonInp;
+    private JButton inpDeleteIcon;
     private JButton fileButtonParams;
+    private JButton paramsDeleteIcon;
     private JPanel molPanel = null;
 
     private JButton addMolBtn;
@@ -60,6 +62,8 @@ public class StartGUI extends JFrame {
     private String outputFilepath;
     private JLabel fileNameInp;
     private JLabel fileNameParams;
+
+    private boolean saved;
 
     private StartGUI() {
         super(Globals.appName);
@@ -100,22 +104,6 @@ public class StartGUI extends JFrame {
         nameField.setFont(Globals.settingsFontNoBold);
         nameField.setBorder(BorderFactory.createLineBorder(Globals.menuBgColor));
         nameField.setMaximumSize(new Dimension(250, nameField.getPreferredSize().height));
-        nameField.getDocument().addDocumentListener(new DocumentListener() {
-            @Override
-            public void insertUpdate(DocumentEvent e) {
-                setError("");
-            }
-
-            @Override
-            public void removeUpdate(DocumentEvent e) {
-                setError("");
-            }
-
-            @Override
-            public void changedUpdate(DocumentEvent e) {
-                setError("");
-            }
-        });
         namePanel.add(nameField);
         contentPane.add(namePanel);
 
@@ -249,16 +237,19 @@ public class StartGUI extends JFrame {
                     @Override
                     public void insertUpdate(DocumentEvent e) {
                         settings.put(setting.getName(), textField.getValue());
+                        saved = false;
                     }
 
                     @Override
                     public void removeUpdate(DocumentEvent e) {
                         settings.put(setting.getName(), textField.getValue());
+                        saved = false;
                     }
 
                     @Override
                     public void changedUpdate(DocumentEvent e) {
                         settings.put(setting.getName(), textField.getValue());
+                        saved = false;
                     }
                 });
 
@@ -303,6 +294,7 @@ public class StartGUI extends JFrame {
                 // enable / disable dependent settings
                 checkBox.addItemListener(e -> {
                     settings.put(setting.getName(), checkBox.isSelected());
+                    saved = false;
                     try {
                         fields.entrySet().stream()
                                 .map(entry -> new Tuple<>(Globals.settings.stream().filter(s -> s.getName().equals(entry.getKey())).findFirst().get(), entry.getValue()))
@@ -361,51 +353,41 @@ public class StartGUI extends JFrame {
                     settingPanel.add(newPanel);
                     settingPanel.setAlignmentY(Component.CENTER_ALIGNMENT);
 
-                    fileButtonInp = new JButton("Choose Input.xyz...");
-                    fileButtonInp.setEnabled(checkBox.isSelected());
-                    fileButtonInp.setBackground(Globals.bgColorDark);
-                    fileButtonInp.setUI(new MetalButtonUI() {
-                        @Override
-                        protected Color getDisabledTextColor() {
-                            return Globals.textColorDisabled;
-                        }
-                    });
-                    fileButtonInp.setForeground(Globals.linkColor);
-                    fileButtonInp.setFont(Globals.btnFontSmall);
-                    fileButtonInp.setAlignmentX(Component.CENTER_ALIGNMENT);
-                    fileButtonInp.setBorder(BorderFactory.createCompoundBorder(
-                            BorderFactory.createLineBorder(Globals.menuBgColor),
-                            BorderFactory.createEmptyBorder(3, 5, 3, 5)));
-                    fileButtonInp.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-                    fileButtonInp.setUI(new MetalButtonUI() {
-                        protected Color getSelectColor() {
-                            return Globals.bgColorDark;
-                        }
-
-                        protected Color getFocusColor() {
-                            return Globals.bgColorDark;
-                        }
-                    });
-                    fileButtonInp.addMouseListener(new MouseAdapter() {
-                        @Override
-                        public void mousePressed(MouseEvent e) {
-                            if (e.getButton() != MouseEvent.BUTTON1) return;
-                            fileButtonInp.setForeground(Globals.linkColorAlt);
-                        }
-
-                        @Override
-                        public void mouseReleased(MouseEvent e) {
-                            fileButtonInp.setForeground(Globals.linkColor);
-                        }
-                    });
-
                     String inputPath = Globals.pref.get("INPUT_PATH", Globals.parentPath);
                     JFileChooser fileChooser = new JFileChooser(inputPath);
                     fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
                     fileChooser.setFileFilter(new FileNameExtensionFilter(".xyz input files", "xyz"));
                     fileChooser.setAcceptAllFileFilterUsed(false);
                     fileChooser.setDialogTitle("Choose an Input.xyz");
-                    settingPanel.add(fileButtonInp);
+
+                    JPanel btnPanel = new JPanel();
+                    btnPanel.setOpaque(false);
+                    inpDeleteIcon = Globals.createIconButton("\uf00d", true, Globals.textColor, Globals.IconSize.MEDIUM, "Clear Input.xyz", e -> {
+                        setInput(null);
+                    });
+                    inpDeleteIcon.setVisible(false);
+                    fileButtonInp = Globals.createTextButton(
+                            "Choose Input.xyz...", false, true, Globals.bgColorDark, Globals.btnFontSmall, 5, 3, true, e -> {
+                                int out = fileChooser.showOpenDialog(StartGUI.this);
+                                Globals.pref.put("INPUT_PATH", fileChooser.getCurrentDirectory().getAbsolutePath());
+                                fileChooser.setCurrentDirectory(fileChooser.getCurrentDirectory());
+                                if (out == JFileChooser.APPROVE_OPTION) {
+                                    setInput(fileChooser.getSelectedFile());
+                                } else {
+                                    setInput(null);
+                                }
+                            }
+                    );
+                    fileButtonInp.setEnabled(checkBox.isSelected());
+                    fileButtonInp.setUI(new MetalButtonUI() {
+                        @Override
+                        protected Color getDisabledTextColor() {
+                            return Globals.textColorDisabled;
+                        }
+                    });
+                    btnPanel.add(fileButtonInp);
+                    btnPanel.add(inpDeleteIcon);
+                    settingPanel.add(btnPanel);
 
                     fileNameInp = new JLabel();
                     fileNameInp.setFont(Globals.settingsFontNoBold);
@@ -421,27 +403,11 @@ public class StartGUI extends JFrame {
                         }
                     });
                     settingPanel.add(fileNameInp);
-                    fileButtonInp.addActionListener(e -> {
-                        setError("");
-                        int out = fileChooser.showOpenDialog(StartGUI.this);
-                        Globals.pref.put("INPUT_PATH", fileChooser.getCurrentDirectory().getAbsolutePath());
-                        fileChooser.setCurrentDirectory(fileChooser.getCurrentDirectory());
-                        if (out == JFileChooser.APPROVE_OPTION) {
-                            fileNameInp.setText(fileChooser.getSelectedFile().getName());
-                            fileNameInp.setVisible(true);
-                            inputFile = fileChooser.getSelectedFile().getAbsolutePath();
-                        } else {
-                            fileNameInp.setText("");
-                            fileNameInp.setVisible(false);
-                            inputFile = "";
-                        }
-                    });
 
                     checkBox.addItemListener(e -> {
-                        setError("");
                         fileButtonInp.setEnabled(checkBox.isSelected());
                         molPanel.setVisible(!checkBox.isSelected());
-                        addMolBtn.setVisible(usedMolNames.size() != DatabaseGUI.getInstance().getMolecules().size() && !checkBox.isSelected());
+                        addMolBtn.setVisible(!checkBox.isSelected());
                         fileNameInp.setVisible(checkBox.isSelected() && inputFile.length() > 0);
                     });
                 }
@@ -461,50 +427,38 @@ public class StartGUI extends JFrame {
                     settingPanel.add(newPanel);
                     settingPanel.setAlignmentY(Component.CENTER_ALIGNMENT);
 
-                    fileButtonParams = new JButton("Choose interaction_params.txt...");
-                    fileButtonParams.setEnabled(checkBox.isSelected());
-                    fileButtonParams.setBackground(Globals.bgColorDark);
-                    fileButtonParams.setUI(new MetalButtonUI() {
-                        @Override
-                        protected Color getDisabledTextColor() {
-                            return Globals.textColorDisabled;
-                        }
-                    });
-                    fileButtonParams.setForeground(Globals.linkColor);
-                    fileButtonParams.setFont(Globals.btnFontSmall);
-                    fileButtonParams.setAlignmentX(Component.CENTER_ALIGNMENT);
-                    fileButtonParams.setBorder(BorderFactory.createCompoundBorder(
-                            BorderFactory.createLineBorder(Globals.menuBgColor),
-                            BorderFactory.createEmptyBorder(3, 5, 3, 5)));
-                    fileButtonParams.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-                    fileButtonParams.setUI(new MetalButtonUI() {
-                        protected Color getSelectColor() {
-                            return Globals.bgColorDark;
-                        }
-
-                        protected Color getFocusColor() {
-                            return Globals.bgColorDark;
-                        }
-                    });
-                    fileButtonParams.addMouseListener(new MouseAdapter() {
-                        @Override
-                        public void mousePressed(MouseEvent e) {
-                            if (e.getButton() != MouseEvent.BUTTON1) return;
-                            fileButtonParams.setForeground(Globals.linkColorAlt);
-                        }
-
-                        @Override
-                        public void mouseReleased(MouseEvent e) {
-                            fileButtonParams.setForeground(Globals.linkColor);
-                        }
-                    });
-
                     String paramsPath = Globals.pref.get("PARAMS_PATH", Globals.parentPath);
                     JFileChooser fileChooser = new JFileChooser(paramsPath);
                     fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
                     fileChooser.setFileFilter(new FileNameExtensionFilter(".txt input files", "txt"));
                     fileChooser.setAcceptAllFileFilterUsed(false);
                     fileChooser.setDialogTitle("Choose an interaction_parameters.txt");
+
+                    JPanel btnPanel = new JPanel();
+                    btnPanel.setOpaque(false);
+                    paramsDeleteIcon = Globals.createIconButton("\uf00d", true, Globals.textColor, Globals.IconSize.MEDIUM, "Clear interaction_params.txt", e -> {
+                        setParams(null);
+                    });
+                    paramsDeleteIcon.setVisible(false);
+                    fileButtonParams = Globals.createTextButton(
+                            "Choose interaction_params.txt...", false, true, Globals.bgColorDark, Globals.btnFontSmall, 5, 3, true, e -> {
+                                int out = fileChooser.showOpenDialog(StartGUI.this);
+                                Globals.pref.put("PARAMS_PATH", fileChooser.getCurrentDirectory().getAbsolutePath());
+                                fileChooser.setCurrentDirectory(fileChooser.getCurrentDirectory());
+                                if (out == JFileChooser.APPROVE_OPTION) {
+                                    setParams(fileChooser.getSelectedFile());
+                                } else {
+                                    setParams(null);
+                                }
+                            }
+                    );
+                    fileButtonParams.setEnabled(checkBox.isSelected());
+                    fileButtonParams.setUI(new MetalButtonUI() {
+                        @Override
+                        protected Color getDisabledTextColor() {
+                            return Globals.textColorDisabled;
+                        }
+                    });
                     settingPanel.add(fileButtonParams);
 
                     fileNameParams = new JLabel();
@@ -521,24 +475,8 @@ public class StartGUI extends JFrame {
                         }
                     });
                     settingPanel.add(fileNameParams);
-                    fileButtonParams.addActionListener(e -> {
-                        setError("");
-                        int out = fileChooser.showOpenDialog(StartGUI.this);
-                        Globals.pref.put("PARAMS_PATH", fileChooser.getCurrentDirectory().getAbsolutePath());
-                        fileChooser.setCurrentDirectory(fileChooser.getCurrentDirectory());
-                        if (out == JFileChooser.APPROVE_OPTION) {
-                            fileNameParams.setText(fileChooser.getSelectedFile().getName());
-                            fileNameParams.setVisible(true);
-                            paramsFile = fileChooser.getSelectedFile().getAbsolutePath();
-                        } else {
-                            fileNameParams.setText("");
-                            fileNameParams.setVisible(false);
-                            paramsFile = "";
-                        }
-                    });
 
                     checkBox.addItemListener(e -> {
-                        setError("");
                         fileButtonParams.setEnabled(checkBox.isSelected());
                         fileNameParams.setVisible(checkBox.isSelected() && paramsFile.length() > 0);
                     });
@@ -557,61 +495,26 @@ public class StartGUI extends JFrame {
         contentPane.add(settingsPanel);
 
         molPanel = new JPanel();
+        molPanel.setLayout(new WrapLayout());
         molPanel.setOpaque(false);
 
         // add molecule count btn
-        addMolBtn = new JButton();
-        addMolBtn.setFont(Globals.iconFont);
-        addMolBtn.setBackground(Globals.bgColor);
-        addMolBtn.setForeground(Globals.textColor);
-        addMolBtn.setOpaque(false);
-        addMolBtn.setBorder(null);
-        addMolBtn.setText("\u002b");
-        addMolBtn.setAlignmentX(Component.CENTER_ALIGNMENT);
-        addMolBtn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        addMolBtn.setToolTipText("Add molecule count");
-        Border border = BorderFactory.createEmptyBorder(6, 6, 6, 6);
-        addMolBtn.setBorder(border);
-        addMolBtn.setFocusPainted(false);
-        addMolBtn.setUI(new MetalButtonUI() {
-            @Override
-                protected Color getSelectColor() {
-                    return Globals.bgColorDark;
-                }
-        });
-        addMolBtn.addActionListener(e -> {
-            setError("");
+        addMolBtn = Globals.createIconButton("\u002B", Globals.textColor, Globals.IconSize.EXTRA_LARGE, "Add molecule count", e -> {
             addMolSelector("", 0);
+
+            // disable the delete button for a single element; should only be no selectors when the database is empty
+            currMolDeleteBtns.values().forEach(v -> v.setEnabled(currMolDeleteBtns.size() != 1));
             molPanel.repaint();
         });
-        addMolBtn.addFocusListener(new FocusListener() {
-
-            private final Border defBorder = BorderFactory.createEmptyBorder(6, 6, 6, 6);
-            private final Border focusedBorder = BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(Color.BLACK),
-                BorderFactory.createEmptyBorder(5, 5, 5, 5)
-            );
-
-            @Override
-            public void focusGained(FocusEvent e) {
-                addMolBtn.setBorder(focusedBorder);
-            }
-
-            @Override
-            public void focusLost(FocusEvent e) {
-                addMolBtn.setBorder(defBorder);
-            }
-            
-        });
+        addMolBtn.setAlignmentX(JComponent.CENTER_ALIGNMENT);
         contentPane.add(molPanel);
         contentPane.add(addMolBtn);
 
         // Start Button
         JButton startBtn = Globals.createButton("Start Simulation", Globals.btnFont, 40, 25, 8, e -> {
             String name = nameField.getText();
-            setError("");
             if (name.length() > 0 && ProcessManager.getInstance().nameExists(name)) {
-                setError("Name is not unique.");
+                showError("Name is not unique.", "Name Has Been Used");
                 return;
             }
 
@@ -628,7 +531,7 @@ public class StartGUI extends JFrame {
                 int ptCount, numMols;
                 if ((boolean) settings.get("Choose All Interaction Parameters")) {
                     if (paramsFile.length() == 0) {
-                        setError("Please select an interaction_params.txt file or deselect 'Choose All Interaction Parameters'");
+                        showError("Please select an interaction_params.txt file or deselect 'Choose All Interaction Parameters'", "Missing Interaction Parameters File");
                         return;
                     }
                     arguments.add("-p");
@@ -637,7 +540,7 @@ public class StartGUI extends JFrame {
 
                 if ((boolean) settings.get("Use Input.xyz")) {
                     if (inputFile.length() == 0) {
-                        setError("Please select an Input.xyz file or deselect 'Use Input.xyz'");
+                        showError("Please select an Input.xyz file or deselect 'Use Input.xyz'", "Missing Input File");
                         return;
                     }
                     arguments.add("-i");
@@ -650,13 +553,13 @@ public class StartGUI extends JFrame {
                         String line2 = s.nextLine().replaceFirst("Energy: -?\\d*.?\\d* Kcal/mole", "");
                         if (!line2.trim().matches("^(\\d *.*?)( | \\d *.*?)*$")) throw new NumberFormatException();
                         numMols = line2.trim().split(" ").length; // TODO: wrong
-                    } catch (NumberFormatException | FileNotFoundException exc) {
-                        setError("Invalid input file!");
+                    } catch (NumberFormatException | FileNotFoundException | NoSuchElementException exc) {
+                        showError("Invalid input file!", "Invalid Input File");
                         return;
                     }
                 } else if (selectedMols.entrySet().stream().filter(kv -> !kv.getKey().equals("") && kv.getValue() > 0).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)).size() == 0) {
                     // only checks the valid molecule counts
-                    setError("You cannot run a simulation with no molecules.");
+                    showError("You cannot run a simulation with no molecules.", "Please Add Molecules");
                     return;
                 } else {
                     ptCount = selectedMols.entrySet().stream().filter(kv -> !kv.getKey().equals("") && kv.getValue() > 0).mapToInt(kv -> DatabaseGUI.getInstance().getMolecule(kv.getKey()).atoms.size() * kv.getValue()).sum();
@@ -679,10 +582,39 @@ public class StartGUI extends JFrame {
         contentPane.add(btnPanel);
     }
 
+    private void setInput(File selectedFile) {
+        if (selectedFile == null) {
+            fileNameInp.setText("");
+            fileNameInp.setVisible(false);
+            inpDeleteIcon.setVisible(false);
+            inputFile = "";
+        } else {
+            fileNameInp.setText(selectedFile.getName());
+            fileNameInp.setVisible(true);
+            inpDeleteIcon.setVisible(true);
+            inputFile = selectedFile.getAbsolutePath();
+        }
+    }
+
+    private void setParams(File selectedFile) {
+        if (selectedFile == null) {
+            fileNameParams.setText("");
+            fileNameParams.setVisible(false);
+            paramsDeleteIcon.setVisible(false);
+            paramsFile = "";
+        } else {
+            fileNameParams.setText(selectedFile.getName());
+            fileNameParams.setVisible(true);
+            paramsDeleteIcon.setVisible(true);
+            paramsFile = selectedFile.getAbsolutePath();
+        }
+    }
+
     private void clearMolSelectors() {
         molPanel.removeAll();
         selectedMols.clear();
         currMolDropdowns.clear();
+        currMolDeleteBtns.clear();
         usedMolNames.clear();
         molPanel.add(fixLabel);
         molPanel.repaint();
@@ -690,6 +622,8 @@ public class StartGUI extends JFrame {
     }
     
     private void addMolSelector(String selected, int value) {
+        // return early if the molecule type cannot be found in the database
+        if (!selected.equals("") && DatabaseGUI.getInstance().getMolecule(selected) == null) return;
         JPanel fullPanel = new JPanel();
         fullPanel.setOpaque(false);
 
@@ -792,16 +726,19 @@ public class StartGUI extends JFrame {
             @Override
             public void insertUpdate(DocumentEvent e) {
                 selectedMols.put((String) comboBox.getSelectedItem(), ((Long) textField.getValue()).intValue());
+                saved = false;
             }
 
             @Override
             public void removeUpdate(DocumentEvent e) {
                 selectedMols.put((String) comboBox.getSelectedItem(), ((Long) textField.getValue()).intValue());
+                saved = false;
             }
 
             @Override
             public void changedUpdate(DocumentEvent e) {
                 selectedMols.put((String) comboBox.getSelectedItem(), ((Long) textField.getValue()).intValue());
+                saved = false;
             }
         });
         
@@ -810,12 +747,14 @@ public class StartGUI extends JFrame {
                 if (!usedMolNames.contains((String) e.getItem())) return;
                 usedMolNames.remove((String) e.getItem());
                 selectedMols.remove((String) e.getItem());
+                saved = false;
             } else if (e.getStateChange() == ItemEvent.SELECTED && !e.getItem().equals("")) {
                 if (usedMolNames.contains((String) e.getItem())) return;
                 usedMolNames.add((String) e.getItem());
                 selectedMols.put((String) e.getItem(), ((Long) textField.getValue()).intValue());
+                saved = false;
             }
-            addMolBtn.setVisible(usedMolNames.size() < DatabaseGUI.getInstance().getMoleculeNames().size());
+            molPanel.setVisible(usedMolNames.size() > 0);
             addMolBtn.setEnabled(usedMolNames.size() < DatabaseGUI.getInstance().getMoleculeNames().size());
             for (JComboBox<String> cb : currMolDropdowns.keySet()) {
                 if (cb == comboBox)
@@ -827,71 +766,38 @@ public class StartGUI extends JFrame {
             comboBox.setSelectedItem(selected);
             usedMolNames.add(selected);
             selectedMols.put(selected, value);
+            saved = false;
         } else
             comboBox.setSelectedIndex(0);
 
         panel.add(textField);
         fullPanel.add(panel);
-        
-        JButton delBtn = new JButton();
-        delBtn.setFont(Globals.iconFont);
-        delBtn.setBackground(Globals.bgColor);
-        delBtn.setForeground(Globals.textColor);
-        delBtn.setOpaque(false);
-        delBtn.setBorder(null);
-        delBtn.setText("\uf00d");
-        delBtn.setAlignmentX(Component.CENTER_ALIGNMENT);
-        delBtn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        delBtn.setToolTipText("Add molecule count");
-        Border border = BorderFactory.createEmptyBorder(6, 6, 6, 6);
-        delBtn.setBorder(border);
-        delBtn.setFocusPainted(false);
-        delBtn.setUI(new MetalButtonUI() {
-            @Override
-                protected Color getSelectColor() {
-                    return Globals.bgColorDark;
-                }
-        });
-        delBtn.addActionListener(e -> {
+        JButton delBtn = Globals.createIconButton("\uf00d", Globals.errorColor, Globals.IconSize.MEDIUM, "Remove instances of " + selected, e -> {
             molPanel.remove(fullPanel);
             usedMolNames.remove((String) comboBox.getSelectedItem());
             currMolDropdowns.remove(comboBox);
+            currMolDeleteBtns.remove(comboBox);
             selectedMols.remove((String) comboBox.getSelectedItem());
-            addMolBtn.setVisible(usedMolNames.size() < DatabaseGUI.getInstance().getMoleculeNames().size());
+            saved = false;
+            molPanel.setVisible(usedMolNames.size() > 0);
             addMolBtn.setEnabled(usedMolNames.size() < DatabaseGUI.getInstance().getMoleculeNames().size());
             for (JComboBox<String> cb : currMolDropdowns.keySet()) {
                 updateMolComboBox(cb);
             }
+
+            // disable the delete button for a single element; should only be no selectors when the database is empty
+            currMolDeleteBtns.values().forEach(v -> v.setEnabled(currMolDeleteBtns.size() != 1));
             molPanel.repaint();
             molPanel.revalidate();
         });
-        delBtn.addFocusListener(new FocusListener() {
-
-            private final Border defBorder = BorderFactory.createEmptyBorder(6, 6, 6, 6);
-            private final Border focusedBorder = BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(Color.BLACK),
-                BorderFactory.createEmptyBorder(5, 5, 5, 5)
-            );
-
-            @Override
-            public void focusGained(FocusEvent e) {
-                delBtn.setBorder(focusedBorder);
-            }
-
-            @Override
-            public void focusLost(FocusEvent e) {
-                delBtn.setBorder(defBorder);
-            }
-            
-        });
         fullPanel.add(delBtn);
-        fullPanel.add(Box.createRigidArea(new Dimension(16, 0)));
+        currMolDeleteBtns.put(comboBox, delBtn);
+        fullPanel.add(Box.createHorizontalStrut(16));
 
         // Remove bugfix label
         molPanel.remove(fixLabel);
         molPanel.add(fullPanel);
         molPanel.add(fixLabel);
-        molPanel.setMaximumSize(molPanel.getPreferredSize());
         molPanel.repaint();
         molPanel.revalidate();
     }
@@ -901,8 +807,11 @@ public class StartGUI extends JFrame {
 
         List<String> s = DatabaseGUI.getInstance().getMoleculeNames().stream()
                 .filter(name -> !usedMolNames.contains(name) || name.equals(selected)).collect(Collectors.toList());
+        if (!s.contains(selected)) usedMolNames.remove(selected);
         if (s.size() == 0) {
             molPanel.remove(cb.getParent().getParent());
+            currMolDropdowns.remove(cb);
+            currMolDeleteBtns.remove(cb);
             molPanel.repaint();
             molPanel.revalidate();
             return;
@@ -919,9 +828,9 @@ public class StartGUI extends JFrame {
         JMenuBar menuBar = new JMenuBar();
         menuBar.setBackground(Globals.bgColor);
         menuBar.setBorderPainted(false);
-        JMenu fileMenu = createMenuOption("File", KeyEvent.VK_F,
+        JMenu fileMenu = Globals.createMenuOption(new MenuOption("File", KeyEvent.VK_F,
                 new MenuOption("Edit Database", e -> {
-                    DatabaseGUI.getInstance().loadFile(Globals.dbPath, false, true);
+                    DatabaseGUI.getInstance().loadFile(Globals.dbPath, true);
                     DatabaseGUI.getInstance().setVisible(true);
                 }, KeyEvent.VK_D, 5),
                 new MenuOption("Load config.txt", e ->
@@ -960,9 +869,9 @@ public class StartGUI extends JFrame {
                 }, KeyEvent.VK_A, 12),
                 new MenuOption("Save config", e -> saveSettings(Globals.configPath), KeyEvent.VK_S),
                 new MenuOption("Quit", e -> closeWindow(), KeyEvent.VK_Q)
-        );
+        ));
         menuBar.add(fileMenu);
-        JMenu optionsMenu = createMenuOption("Options", KeyEvent.VK_O,
+        JMenu optionsMenu = Globals.createMenuOption(new MenuOption("Options", KeyEvent.VK_O,
                 new MenuOption("Set output directorY", e ->
                 {
                     String outputPath = Globals.pref.get("OUTPUT_PATH", Globals.parentPath);
@@ -985,68 +894,13 @@ public class StartGUI extends JFrame {
                     } catch (IOException ioException) {
                         ioException.printStackTrace();
                     }
-                }, KeyEvent.VK_W));
+                }, KeyEvent.VK_W)));
         menuBar.add(optionsMenu);
-        JMenu processesMenu = createMenuOption("Processes", KeyEvent.VK_P,
-                new MenuOption("Monitor processes", e -> ProcessGUI.getInstance().setVisible(true), KeyEvent.VK_M));
+        JMenu processesMenu = Globals.createMenuOption(new MenuOption("Processes", KeyEvent.VK_P,
+                new MenuOption("Monitor processes", e -> ProcessGUI.getInstance().setVisible(true), KeyEvent.VK_M)));
         menuBar.add(processesMenu);
 
         setJMenuBar(menuBar);
-    }
-
-    private JMenu createMenuOption(String name, int mnemonic, MenuOption... items) {
-        JMenu menu = new JMenu(name);
-        menu.setMnemonic(mnemonic);
-        menu.setBorderPainted(false);
-        menu.setForeground(Globals.textColor);
-        menu.setFont(Globals.menuFont);
-        menu.setOpaque(true);
-        menu.setBackground(Globals.bgColor);
-        menu.addMouseListener(new MouseAdapter() {
-
-            @Override
-            public void mouseEntered(MouseEvent e) {
-                menu.setBackground(Globals.bgColorDark);
-            }
-
-            @Override
-            public void mouseExited(MouseEvent e) {
-                menu.setBackground(Globals.bgColor);
-            }
-
-        });
-        JPopupMenu popupMenu = menu.getPopupMenu();
-        popupMenu.setBorder(BorderFactory.createEmptyBorder());
-
-        for (MenuOption opt : items) {
-            JMenuItem item = createSubOption(opt);
-            menu.add(item);
-        }
-
-        return menu;
-    }
-
-    private JMenuItem createSubOption(MenuOption opt) {
-        JMenuItem item = new JMenuItem(opt.name) {
-            @Override
-            protected void paintComponent(Graphics g) {
-                KeyStroke accel = getAccelerator();
-                setAccelerator(null);
-                super.paintComponent(g);
-                setAccelerator(accel);
-            }
-        };
-        item.setMnemonic(opt.mnemonic);
-        if (opt.mnemonicIndex != -1) item.setDisplayedMnemonicIndex(opt.mnemonicIndex);
-        item.setAccelerator(KeyStroke.getKeyStroke(opt.mnemonic, KeyEvent.CTRL_DOWN_MASK));
-        item.setBackground(Globals.menuBgColor);
-        item.setBorderPainted(false);
-        item.setForeground(Globals.textColor);
-        item.setFont(Globals.menuFont);
-
-        // action
-        item.addActionListener(opt.listener);
-        return item;
     }
 
     public void init() {
@@ -1067,19 +921,11 @@ public class StartGUI extends JFrame {
         LayoutManager lm = new BoxLayout(contentPane, BoxLayout.Y_AXIS);
         contentPane.setLayout(lm);
         contentPane.setBackground(Globals.bgColor);
-        setContentPane(contentPane);
-
-        DatabaseGUI.getInstance().loadFile(Globals.dbPath);
-        DatabaseGUI.getInstance().addSaveListener(() -> {
-            for (JComboBox<String> cb : currMolDropdowns.keySet()) {
-                updateMolComboBox(cb);
-            }
-            addMolBtn.setVisible(usedMolNames.size() < DatabaseGUI.getInstance().getMoleculeNames().size());
-            addMolBtn.setEnabled(usedMolNames.size() < DatabaseGUI.getInstance().getMoleculeNames().size());
-            for (JComboBox<String> cb : currMolDropdowns.keySet()) {
-                updateMolComboBox(cb);
-            }
-        });
+        JScrollPane sp = new JScrollPane(contentPane, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        sp.getVerticalScrollBar().setUnitIncrement(16);
+        sp.setBackground(Globals.bgColor);
+        sp.setBorder(null);
+        setContentPane(sp);
 
         // if any paths are outdated, delete them to go back to defaults
         if (!new File(Globals.pref.get("OUTPUT_PATH", Globals.parentPath)).exists()) Globals.pref.remove("OUTPUT_PATH");
@@ -1092,39 +938,55 @@ public class StartGUI extends JFrame {
 
         outputFilepath = Globals.pref.get("OUTPUT_PATH", Globals.parentPath);
 
+        DatabaseGUI.getInstance().loadFile(Globals.dbPath, true);
+        DatabaseGUI.getInstance().addSaveListener(() -> {
+            molPanel.setVisible(usedMolNames.size() > 0);
+            addMolBtn.setEnabled(usedMolNames.size() < DatabaseGUI.getInstance().getMoleculeNames().size());
+            if (currMolDropdowns.size() == 0 && DatabaseGUI.getInstance().getMolecules().size() > 0) {
+                addMolSelector("", 0);
+            } else for (JComboBox<String> cb : currMolDropdowns.keySet()) {
+                updateMolComboBox(cb);
+            }
+
+            // disable the delete button for a single element; should only be no selectors when the database is empty
+            currMolDeleteBtns.values().forEach(v -> v.setEnabled(currMolDeleteBtns.size() != 1));
+        });
+
         addMenu();
         drawTitle();
         drawSettings();
 
-        errorLabel = new JLabel("", SwingConstants.CENTER);
-        errorLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-        errorLabel.setForeground(Globals.errorColor);
-        errorLabel.setFont(Globals.btnFont);
-        errorLabel.setBorder(BorderFactory.createEmptyBorder(6, 0, 6, 0));
-        contentPane.add(errorLabel);
-
         setVisible(true);
+        setResizable(false);
+
         populateSettings(Globals.configPath);
+
+        // disable the delete button for a single element; should only be no selectors when the database is empty
+        currMolDeleteBtns.values().forEach(v -> v.setEnabled(currMolDeleteBtns.size() != 1));
+        saved = true;
     }
 
     private void closeWindow() {
-        int msg = JOptionPane.showOptionDialog(this,
-                String.format("Do you want to save your current settings for next time you open %s?", Globals.appName),                         
-                "Save Settings?", 
-                JOptionPane.YES_NO_OPTION, 
-                JOptionPane.QUESTION_MESSAGE,
-                null,
-                null,
-                null);
-        if (msg == JOptionPane.YES_OPTION) {
-            saveSettings(Globals.configPath);
-            System.exit(1);
-        } else if (msg == JOptionPane.NO_OPTION) {
-            System.exit(1);
-        }
+        if (!saved) {
+            int msg = JOptionPane.showOptionDialog(this,
+                    String.format("Do you want to save your current settings for next time you open %s?", Globals.appName),
+                    "Save Settings?",
+                    JOptionPane.YES_NO_OPTION,
+                    JOptionPane.QUESTION_MESSAGE,
+                    null,
+                    null,
+                    null);
+            if (msg == JOptionPane.YES_OPTION) {
+                saveSettings(Globals.configPath);
+                System.exit(1);
+            } else if (msg == JOptionPane.NO_OPTION) {
+                System.exit(1);
+            }
+        } else System.exit(1);
     }
 
     public void populateSettings(String path) {
+        clearMolSelectors();
         File valsFile = new File(path);
         try (Scanner s = new Scanner(valsFile)) {
             while (s.hasNextLine()) {
@@ -1171,17 +1033,28 @@ public class StartGUI extends JFrame {
                     .findFirst();
             if (constraintObj.isEmpty()) continue;
             SwingUtilities.invokeLater(() -> {
+                boolean state = saved;
                 boolean selected = (boolean) settings.get(entry.getKey());
                 if (selected) entry.getValue().setSelected(true);
-                else
+                else {
                     for (ItemListener itemListener : entry.getValue().getItemListeners()) {
                         itemListener.itemStateChanged(new ItemEvent(entry.getValue(), ItemEvent.ITEM_STATE_CHANGED, entry.getValue(), ItemEvent.DESELECTED));
                     }
+                }
+                saved = state;
             });
         }
+
+        molPanel.setVisible(DatabaseGUI.getInstance().getMolecules().size() > 0);
+        if (currMolDropdowns.size() == 0 && DatabaseGUI.getInstance().getMolecules().size() > 0) {
+            addMolSelector("", 0);
+            return;
+        }
+        addMolBtn.setEnabled(usedMolNames.size() != DatabaseGUI.getInstance().getMolecules().size());
         
         fileButtonInp.setEnabled((boolean) settings.get("Use Input.xyz"));
         fileButtonParams.setEnabled((boolean) settings.get("Choose All Interaction Parameters"));
+        saved = false;
     }
 
     public void populateSettings(Map<String, Object> settings, Map<String, Integer> molCounts) {
@@ -1211,19 +1084,18 @@ public class StartGUI extends JFrame {
 
         clearMolSelectors();
         molCounts.forEach(this::addMolSelector);
+        saved = false;
     }
 
-    private void setError(String s) {
-        errorLabel.setText(s);
-        repaint();
-        revalidate();
+    private void showError(String s, String title) {
+        JOptionPane.showMessageDialog(this, s, title, JOptionPane.ERROR_MESSAGE, null);
     }
 
-    public void saveSettings(String path, boolean overrideMols) {
+    public void saveSettings(String path) {
         KeyboardFocusManager.getCurrentKeyboardFocusManager().clearGlobalFocusOwner();
         try (FileWriter writer = new FileWriter(path)) {
             // Long list of functions that sorts the list of settings as they are
-            // sorted in Globals.setting before formatting into a String to write
+            // sorted in Globals.settings before formatting into a String to write
             String str = settings
                     .keySet() // returns setting names
                     .stream()
@@ -1235,16 +1107,12 @@ public class StartGUI extends JFrame {
                             settings.get(Globals.settings.get(i).getName()))) // converts back to setting values
                     .map(entry -> String.format("%s:  %s", entry.getKey(), entry.getValue()))
                         .collect(Collectors.joining("\n")) + "\n";
-            if (!overrideMols) str += selectedMols.keySet().stream().filter(key -> !key.equals("") && selectedMols.get(key) > 0).map(key -> String.format("%s  %d", key, selectedMols.get(key))).collect(Collectors.joining("\n"));
-            else str += DatabaseGUI.getInstance().getMoleculeNames().get(0) + "  " + "1";
+            str += selectedMols.keySet().stream().filter(key -> !key.equals("") && selectedMols.get(key) > 0).map(key -> String.format("%s  %d", key, selectedMols.get(key))).collect(Collectors.joining("\n"));
             writer.write(str);
-        } catch (IOException e) {
-            e.printStackTrace();
+            saved = true;
+        } catch (IOException exc) {
+            exc.printStackTrace();
         }
-    }
-
-    public void saveSettings(String path) {
-        saveSettings(path, false);
     }
 
     public void createInput(File file) throws IOException {

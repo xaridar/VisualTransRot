@@ -191,7 +191,6 @@ public class ProcessGUI extends JFrame {
         pack();
         setResizable(false);
         setLocationRelativeTo(getParent());
-        setAlwaysOnTop(true);
 
         // Close window on ESC
         getRootPane().registerKeyboardAction(e -> dispose(),

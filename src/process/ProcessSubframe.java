@@ -40,7 +40,7 @@ public class ProcessSubframe extends JFrame {
     private final JTabbedPane tabbedPane;
     private final JLabel statusLabel;
     private final JLabel etLabel;
-    private final JLabel dirLabel;
+    private final JButton dirBtn;
     private final JPanel endPanel;
 
     private boolean dirShown = false;
@@ -137,14 +137,7 @@ public class ProcessSubframe extends JFrame {
         outputTitleLabel.setForeground(Globals.textColor);
         outputTitleLabel.setFont(Globals.settingsFont);
         dirPanel.add(outputTitleLabel);
-        dirLabel = new JLabel();
-        dirLabel.setForeground(Globals.linkColor);
-        dirLabel.setFont(Globals.settingsFontNoBold);
-        dirLabel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        dirLabel.setFocusable(true);
-        dirLabel.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseReleased(MouseEvent e) {
+        dirBtn = Globals.createLinkButton("", Globals.settingsFontNoBold, 3, 2, false, e -> {
             try {
                 if (Desktop.isDesktopSupported()) {
                     Desktop.getDesktop().open(ps.getOutputDir());
@@ -152,9 +145,8 @@ public class ProcessSubframe extends JFrame {
             } catch (IOException ioException) {
                 ioException.printStackTrace();
             }
-            }
         });
-        dirPanel.add(dirLabel);
+        dirPanel.add(dirBtn);
         infoPanel.add(dirPanel);
 
         JPanel molPanel = new JPanel();
@@ -176,20 +168,20 @@ public class ProcessSubframe extends JFrame {
         infoPanel.add(molPanel);
 
         if (ps.getOutputDir() != null && ps.getOutputDir().exists()) {
-            JLabel restartLink = new JLabel("<html><u>Load config with values</u></html>");
-            restartLink.setForeground(Globals.linkColor);
-            restartLink.setFont(Globals.settingsFontNoBold);
-            restartLink.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-            restartLink.addMouseListener(new MouseAdapter() {
-                @Override
-                public void mouseClicked(MouseEvent e) {
-                    StartGUI.getInstance().populateSettings(ps.getConfigMap(), ps.getMolCounts());
-                }
+            JPanel restartPanel = new JPanel();
+            restartPanel.setLayout(new BoxLayout(restartPanel, BoxLayout.Y_AXIS));
+            restartPanel.setOpaque(false);
+            JButton restartLink = Globals.createLinkButton("Load config with values", Globals.settingsFontNoBold, 3, 2, true, e -> {
+                StartGUI.getInstance().populateSettings(ps.getConfigMap(), ps.getMolCounts());
             });
-            infoPanel.add(restartLink);
+            restartLink.setAlignmentX(Component.LEFT_ALIGNMENT);
+            restartPanel.add(restartLink);
+            restartPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, restartPanel.getPreferredSize().height));
+            infoPanel.add(restartPanel);
         }
 
         JScrollPane sp = new JScrollPane(infoPanel, JScrollPane.VERTICAL_SCROLLBAR_NEVER, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+        sp.getHorizontalScrollBar().setUnitIncrement(16);
         sp.setBorder(null);
 
         tabbedPane.addTab("Process Info", sp);
@@ -233,41 +225,36 @@ public class ProcessSubframe extends JFrame {
                     JPanel filePanel = new JPanel(new BorderLayout());
                     filePanel.setOpaque(false);
                     filePanel.setBorder(null);
-                    JLabel label = new JLabel("<html><u>" + file.getName() + "</u></html>");
-                    label.setForeground(Globals.linkColor);
-                    label.setFont(Globals.settingsFontNoBold);
-                    label.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-                    label.setFocusable(true);
-                    label.setMaximumSize(label.getPreferredSize());
-                    label.addMouseListener(new MouseAdapter() {
-                        @Override
-                        public void mouseReleased(MouseEvent e) {
-                            try {
-                                if (Desktop.isDesktopSupported()) {
-                                    Desktop.getDesktop().open(file);
-                                }
-                            } catch (IOException ioException) {
-                                ioException.printStackTrace();
+                    JButton btn = Globals.createLinkButton(file.getName(), Globals.settingsFontNoBold, 3, 2, true, e -> {
+                        try {
+                            if (Desktop.isDesktopSupported()) {
+                                Desktop.getDesktop().open(file);
                             }
+                        } catch (IOException ioException) {
+                            ioException.printStackTrace();
                         }
                     });
-                    filePanel.add(label, BorderLayout.WEST);
+                    filePanel.add(btn, BorderLayout.WEST);
 
                     if (file.getName().endsWith(".xyz") && !file.getName().endsWith("Movie.xyz")) {
-                        JButton popBtn = new JButton("Use as Input.xyz");
-                        popBtn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-                        popBtn.addActionListener(e -> {
+                        JButton popBtn = Globals.createButton("Use as Input.xyz", Globals.menuBgColorLight, null, null, null, Globals.btnFontSmaller, 25, 10, 4, e -> {
                             try {
                                 StartGUI.getInstance().createInput(file);
                             } catch (IOException ioException) {
                                 ioException.printStackTrace();
                             }
                         });
+                        popBtn.setAlignmentY(Component.CENTER_ALIGNMENT);
                         filePanel.add(popBtn, BorderLayout.EAST);
                     }
+                    filePanel.add(Box.createVerticalStrut(8), BorderLayout.NORTH);
+                    filePanel.add(Box.createVerticalStrut(8), BorderLayout.SOUTH);
                     filePanel.setMaximumSize(new Dimension(filePanel.getMaximumSize().width, filePanel.getPreferredSize().height));
 
                     outpPanel.add(filePanel);
+                    JSeparator sep = new JSeparator(SwingConstants.HORIZONTAL);
+                    sep.setForeground(Globals.textColor);
+                    outpPanel.add(sep);
                 }
             } else {
                 JLabel notFoundLabel = new JLabel("No Output Directory Found");
@@ -287,20 +274,7 @@ public class ProcessSubframe extends JFrame {
         endPanel = new JPanel();
         if (ps.getStatus() == ProcessStruct.ProcessStatus.ALIVE) {
             endPanel.setBackground(Globals.menuBgColorLight);
-            JLabel endLabel = new JLabel("<html><u>End Process</u></html>", SwingConstants.CENTER);
-            endLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-            endLabel.setForeground(Globals.errorColor);
-            endLabel.setBorder(BorderFactory.createEmptyBorder(8, 0, 8, 0));
-            endLabel.setFont(Globals.btnFont);
-            endLabel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-            endLabel.setFocusable(true);
-            endLabel.setMaximumSize(new Dimension(endLabel.getPreferredSize().width, endLabel.getHeight()));
-            endLabel.addMouseListener(new MouseAdapter() {
-                @Override
-                public void mouseClicked(MouseEvent e) {
-                    ps.destroyIfAlive();
-                }
-            });
+            JButton endLabel = Globals.createLinkButton("End Process", Globals.btnFont, 4, 8, true, Globals.errorColor, e -> ps.destroyIfAlive());
 
             endPanel.add(endLabel);
             contentPane.add(endPanel);
@@ -309,7 +283,6 @@ public class ProcessSubframe extends JFrame {
         setSize(new Dimension(400, 550));
         setLocationRelativeTo(null);
         setVisible(true);
-        setAlwaysOnTop(true);
 
         setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
         addWindowListener(new WindowAdapter() {
@@ -332,6 +305,7 @@ public class ProcessSubframe extends JFrame {
 
         JScrollPane sp = new JScrollPane(panel, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         sp.getVerticalScrollBar().setUnitIncrement(16);
+        sp.getHorizontalScrollBar().setUnitIncrement(16);
         sp.setBorder(null);
 
         for (String line : lines) {
@@ -356,7 +330,7 @@ public class ProcessSubframe extends JFrame {
 
         if (ps.getOutputDir() != null && !dirShown && ps.getOutputDir().exists()) {
             dirShown = true;
-            dirLabel.setText("<html><u>" + ps.getOutputDir().getAbsolutePath() + "</u></html>");
+            dirBtn.setText("<html><u>" + ps.getOutputDir().getAbsolutePath() + "</u></html>");
         }
 
         if (ps.getStatus() != ProcessStruct.ProcessStatus.ALIVE && oldStatus == ProcessStruct.ProcessStatus.ALIVE) {

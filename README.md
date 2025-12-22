@@ -94,36 +94,78 @@ In VTR, this file reads and writes to [saved_dbase.txt](saved_dbase.txt) for dat
 
 To edit the database used for TransRot calculations, a visual editor can be opened through menu navigation (`File > Edit Database`) or using *CTRL+D*.
 
-The Database Editor interface allows a user to load an existing dbase file, add or remove particles or atoms, and save the database (either to saved_dbase.txt or another location).
+The Database Editor interface allows a user to search for molecules, edit or remove any individual molecule, save the database to another location (*CTRL+A*), or upload either an existing dbase file (*CTRL+F*) or text descriptions of molecules (*CTRL+T*). These last three options can be found in the Database Editor's File menu, or by using the associated keybinds.
 
 In its default state, [saved_dbase.txt](saved_dbase.txt) is populated with a sample database with particle definitions for `NH4+`, `CL-`, and `H2O (using TIP3P)`.
-If any of these particles need to be modified, removed, or added to, the Database Editor interface provides multiple options to do so.
+If any of these molecule types need to be modified or removed or new molecule types are needed for a simulation, the Database Editor interface provides multiple options to do so.
 
-#### Adding/Removing Particles and Atoms
+#### Adding a Molecule Type
+- When the Database Editor is opened, a list of all populated molecule types appears.
+- Selecting 'Add Molecule' opens a blank Molecule Editor, which the user can edit and save to add the molecule to the list and consequently the saved database.
 
-- At the top of the interface there is an 'Add Molecule' button, which will create a new empty particle at the bottom of the database.
-- Similarly, 'Clear Molecules' will clear the database in its current state.
-- The delete icon next to a particle's name and radius will remove the individual particle's definition.
-- Each particle is accompanied by an 'Add Atom' button, which will append a new empty atom to the particle.
-- To delete an atom, use the delete icon at the end of its definition.
+#### Editing A Molecule Type
+- Each listed molecule type is accompanied by a pencil icon.
+- Selecting this icon opens the Molecule Editor for the chosen molecule.
 
-#### Editing Particles and Atoms
+#### Removing a Molecule Type
+- Each listed molecule type is also associated with a delete icon.
+- Selecting this icon, upon confirmation, will delete the molecule type from the database.
 
-- Each particle is defined by its name, an estimated radius, and a list of associated atoms.
-  - All particle names must be unique in order for the database to be saved.
-- Each atom is defined by its name, position, 5 interaction parameters ([A, B, C, D, and Q](https://github.com/steventopper/TransRot/tree/main#how-to-add-new-molecules-to-the-database)), and mass.
-  - VTR allows two types of atoms: predefined atoms and 'ghost' atoms, which have no mass.
-  - All defined atoms are pre-loaded as options for an atom's type, with each associated with a pre-defined atomic mass.
-  - Selecting the 'Ghost' option for an atom allows a user to specify its name separately and marks said atom as a massless interaction point for TransRot.
-  - The C and D parameters can also be defined in terms of σ and ϵ, as defined in https://github.com/steventopper/TransRot/wiki/Noble-gas-clusters-1:-Adding-noble-gases-to-TransRot. If this calculation is desired, selecting 'Calculate C & D' for a given atoms allows the user to calculate C and D based off of these new parameters.
+#### Loading a Database (File/Text)
+- Input can be provided through either a `.txt` file or text input, formatted according to the same rules as `saved_dbase.txt`. The input database can be used to replace the current one, or its molecules can be added to already defined ones.
+  - To load a database from a formatted `.txt` file, a menu can be opened using (`File > Load molecules > from .txt File`) or using *CTRL+F* within the Database Editor.
+  - To load the input by pasting formatted plaintext, a dialog can be opened using (`File > Load molecules > from Text`) or using *CTRL+T* within the Database Editor.
+- Upon choosing an upload source, the user is provided to option to `Replace` curreent molecules or `Append` to them.
+  - In the case that any newly imported molecule names are the same as any existing molecules, the `Append` option is replaced with `Append - Keep Old` and `Append - Keep New`. `Keep Old` does not aloow overwritten molecules, while `Keep New` automatically overwrites all molecules with matching names.
 
-#### Loading & Saving a Database
+### Molecule Editor
+![](images/mol_editor.png)
 
-VTR can both load and save database files to allow batch uploading/downloading of particles.
+When editing any molecule type in the database, a Molecule Editor is automatically opened that allows editing of a molecule's name, radius, and atoms.
+Each Molecule Editor also maintains an independent saved state to allow reversion of changes before saving a molecule type back to the database.
 
-- Selecting 'Load Database' allows the user to select a `.txt` file to be loaded into VTR. Any properly formatted molecules from this file are appended onto existing molecules already in VTR.
-- Selecting 'Save Database' saves the current state of the database in VTR to saved_dbase.txt. No changes are committed to the file until the database has been saved. When the database window is closed, there is also an opportunity to save if desired.
-- Selecting 'Save Database As...' allows the user to select a new location to save the current database file to for use elsewhere. Using this feature will not save the database to saved_dbase.txt for use by VTR without additionally saving independently.
+#### Saving a Molecule
+- Selecting `Save Molecule` or pressing *CTRL+S* saves the current state of a molecule to `saved_dbase.txt`.
+- Closing a Molecule Editor without saving first will prompt the user to save if desired.
+- Selecting `Reset to Saved Molecule` or using *CTRL+R* will automatically revert a molecule type's state to the last saved version, including changes to name, radius, or any change to number or configuration of atoms.
+
+[comment]: <> (#### Adding/Removing Particles and Atoms)
+
+[comment]: <> (- At the top of the interface there is an 'Add Molecule' button, which will create a new empty particle at the bottom of the database.)
+
+[comment]: <> (- Similarly, 'Clear Molecules' will clear the database in its current state.)
+
+[comment]: <> (- The delete icon next to a particle's name and radius will remove the individual particle's definition.)
+
+[comment]: <> (- Each particle is accompanied by an 'Add Atom' button, which will append a new empty atom to the particle.)
+
+[comment]: <> (- To delete an atom, use the delete icon at the end of its definition.)
+
+[comment]: <> (#### Editing Particles and Atoms)
+
+[comment]: <> (- Each particle is defined by its name, an estimated radius, and a list of associated atoms.)
+
+[comment]: <> (  - All particle names must be unique in order for the database to be saved.)
+
+[comment]: <> (- Each atom is defined by its name, position, 5 interaction parameters &#40;[A, B, C, D, and Q]&#40;https://github.com/steventopper/TransRot/tree/main#how-to-add-new-molecules-to-the-database&#41;&#41;, and mass.)
+
+[comment]: <> (  - VTR allows two types of atoms: predefined atoms and 'ghost' atoms, which have no mass.)
+
+[comment]: <> (  - All defined atoms are pre-loaded as options for an atom's type, with each associated with a pre-defined atomic mass.)
+
+[comment]: <> (  - Selecting the 'Ghost' option for an atom allows a user to specify its name separately and marks said atom as a massless interaction point for TransRot.)
+
+[comment]: <> (  - The C and D parameters can also be defined in terms of σ and ϵ, as defined in https://github.com/steventopper/TransRot/wiki/Noble-gas-clusters-1:-Adding-noble-gases-to-TransRot. If this calculation is desired, selecting 'Calculate C & D' for a given atoms allows the user to calculate C and D based off of these new parameters.)
+
+[comment]: <> (#### Loading & Saving a Database)
+
+[comment]: <> (VTR can both load and save database files to allow batch uploading/downloading of particles.)
+
+[comment]: <> (- Selecting 'Load Database' allows the user to select a `.txt` file to be loaded into VTR. Any properly formatted molecules from this file are appended onto existing molecules already in VTR.)
+
+[comment]: <> (- Selecting 'Save Database' saves the current state of the database in VTR to saved_dbase.txt. No changes are committed to the file until the database has been saved. When the database window is closed, there is also an opportunity to save if desired.)
+
+[comment]: <> (- Selecting 'Save Database As...' allows the user to select a new location to save the current database file to for use elsewhere. Using this feature will not save the database to saved_dbase.txt for use by VTR without additionally saving independently.)
 
 ### Process Monitor
 ![](images/pmon.png)

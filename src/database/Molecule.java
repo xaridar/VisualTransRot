@@ -1,14 +1,7 @@
 package database;
 
-import java.awt.BorderLayout;
-import java.awt.Component;
-import java.awt.Cursor;
-import java.awt.Dimension;
-import java.awt.Toolkit;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import java.awt.*;
+import java.awt.event.*;
 import java.math.BigDecimal;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
@@ -16,22 +9,13 @@ import java.util.List;
 import java.util.Scanner;
 import java.util.stream.Collectors;
 
-import javax.swing.BorderFactory;
-import javax.swing.Box;
-import javax.swing.BoxLayout;
-import javax.swing.JButton;
-import javax.swing.JFormattedTextField;
-import javax.swing.JLabel;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JTextField;
-import javax.swing.SwingConstants;
-import javax.swing.SwingUtilities;
+import javax.swing.*;
 import javax.swing.text.AbstractDocument;
 import javax.swing.text.AttributeSet;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.DocumentFilter;
 import javax.swing.text.NumberFormatter;
+import javax.xml.crypto.Data;
 
 import util.Globals;
 
@@ -59,7 +43,7 @@ public class Molecule {
             double radius = Double.parseDouble(parts[1]);
 
             List<Atom> atoms = new ArrayList<>();
-            Molecule mol = new Molecule();
+            Molecule mol = new Molecule(true);
             for (int i = 0; i < numElems; i++) {
                 if (!s.hasNextLine()) {
                     System.err.println("Unexpected format for database file.");
@@ -102,30 +86,59 @@ public class Molecule {
             mol.molName = name;
             mol.radius = radius;
             mol.atoms = atoms;
+
+            // don't save right now if it errors
+            // this error only occurs from duplicated, which are taken care of elsewhere
+            try {
+                mol.saveMolecule();
+            } catch (NullPointerException ignored) {}
             mols.add(mol);
         }
         return mols;
     }
-    
-    DatabaseGUI dbGUI;
+
     JPanel panel;
+    JTextField nameField;
+    JFormattedTextField radiusField;
     List<JPanel> atomPanels = new ArrayList<>();
+    JPanel scrollablePanel;
+    JScrollPane sp;
+    JScrollBar vScrollbar;
+
+    private Molecule savedState;
+    private Molecule parentState = null;
 
     public String molName;
     public double radius;
     public List<Atom> atoms;
 
-    public Molecule(DatabaseGUI dbGUI, String molName, double radius, List<Atom> atomSpecs) {
-        this.dbGUI = dbGUI;
+    public boolean changed;
+
+    public Molecule() {
+        this.molName = "";
+        this.radius = 0;
+        this.atoms = new ArrayList<>();
+    }
+
+    public Molecule(boolean save) {
+        this();
+        if (save) savedState = new Molecule();
+        savedState.parentState = this;
+    }
+
+    public Molecule(String molName, double radius, List<Atom> atomSpecs) {
         this.molName = molName;
         this.radius = radius;
         this.atoms = atomSpecs;
+        savedState = new Molecule();
+        savedState.parentState = this;
     }
 
-    public Molecule() {
-        molName = "";
-        radius = 0;
-        atoms = new ArrayList<>();
+    private void refreshWindow() {
+        scrollablePanel.revalidate();
+        scrollablePanel.repaint();
+        SwingUtilities.getWindowAncestor(scrollablePanel).pack();
+        SwingUtilities.invokeLater(() -> vScrollbar.setValue(vScrollbar.getMaximum()));
     }
 
     public void addEmptyAtom() {
@@ -133,24 +146,111 @@ public class Molecule {
         atoms.add(atom);
 
         JPanel aPanel = atom.getPanel();
-        panel.add(aPanel, panel.getComponentCount() - 1);
+        scrollablePanel.add(aPanel);
         atomPanels.add(aPanel);
+        changed = true;
 
-        panel.repaint();
-        panel.revalidate();
+        refreshWindow();
     }
 
     public void removeAtom(int index) {
         atoms.remove(index);
         JPanel removed = atomPanels.remove(index);
-        panel.remove(removed);
-        panel.repaint();
-        panel.revalidate();
+        scrollablePanel.remove(removed);
+        changed = true;
+
+        refreshWindow();
     }
 
     public void removeAtom(Atom a) {
         int index = atoms.indexOf(a);
         removeAtom(index);
+    }
+
+    public boolean saveMolecule() {
+        // Errors if name is empty
+        if (molName.equals("")) {
+            JOptionPane.showMessageDialog(SwingUtilities.getWindowAncestor(panel), "Error: Every molecule in the database must have a name!",
+                    "Name Undefined", JOptionPane.ERROR_MESSAGE, null);
+            return false;
+        }
+
+        // If name is a copy of another existing molecule, some options are presented to the user:
+        // - **Overwrite** - The original molecule with the same name is deleted in favor of the new one.
+        // - **Keep Both** - Renames the new molecule by appending a number at the end (similarly to Windows OS in the case of file name repeats).
+        // - **Swap Names** - Saves the old molecule with the current molecule's previous name, using the new name for the updated molecule. Only available if this molecule has a previous name.
+        // - **Cancel** - Cancels the save and allows the user to rename this molecule to avoid conflicts.
+        // Closing the pop-up dialog has the same effect as selecting "Cancel"
+        List<String> allOtherNames = DatabaseGUI.getInstance().getMolecules().stream().filter(mol -> mol != this).map(mol -> mol.molName).collect(Collectors.toList());
+        if (allOtherNames.contains(molName)) {
+            boolean canSwap = savedState != null && !savedState.molName.equals(molName);
+            String[] options = canSwap ? new String[]{
+                    "Overwrite",
+                    "Keep Both",
+                    "Swap Names",
+                    "Cancel"
+            } : new String[]{
+                    "Overwrite",
+                    "Keep Both",
+                    "Cancel"
+            };
+            int opt = JOptionPane.showOptionDialog(SwingUtilities.getWindowAncestor(panel),
+                    "<html>You are trying to save a molecule using a name that already exists in the database. What would you like to do?<ol>" +
+                            "<li>Overwrite - The original molecule with the same name is deleted in favor of the new one.</li>" +
+                            "<li>Keep Both - Automatically rename the new molecule name using a numeric suffix.</li>" +
+                            (canSwap ? "<li>Swap Names - Swap the names of the old molecule and this one.</li>" : "") +
+                            "</ol></html>",
+                    "Duplicate Name",
+                    JOptionPane.DEFAULT_OPTION,
+                    JOptionPane.QUESTION_MESSAGE,
+                    null,
+                    options,
+                    "Cancel"
+            );
+            if (opt == -1) return false;
+
+            Molecule other = DatabaseGUI.getInstance().getMolecule(molName);
+            String selection = options[opt];
+            switch (selection) {
+                case "Overwrite":
+                    DatabaseGUI.getInstance().removeMolecule(other);
+                    break;
+                case "Keep Both":
+                    boolean exists = true;
+                    String newName = molName;
+                    int i = 1;
+                    while (exists) {
+                        newName = molName + "_" + i;
+                        if (DatabaseGUI.getInstance().getMolecule(newName) == null) exists = false;
+                        else i++;
+                    }
+                    molName = newName;
+                    nameField.setText(molName);
+                    break;
+                case "Swap Names":
+                    other.molName = savedState.molName;
+                    break;
+                case "Cancel":
+                    return false;
+            }
+        }
+        SwingUtilities.invokeLater(() -> changed = false);
+        savedState = copy();
+//        DatabaseGUI.getInstance().saveDB(Globals.dbPath);
+        return true;
+    }
+
+    private Molecule copy() {
+        Molecule mol = new Molecule();
+        mol.molName = molName;
+        mol.radius = radius;
+        List<Atom> atomCopies = new ArrayList<>();
+        for (Atom a : atoms) {
+            atomCopies.add(new Atom(this, a.name, a.x, a.y, a.z, a.a, a.b, a.c, a.d, a.q, a.mass, a.massless));
+        }
+        mol.atoms = atomCopies;
+        mol.parentState = this;
+        return mol;
     }
     
     @Override
@@ -163,10 +263,11 @@ public class Molecule {
         panel = new JPanel();
         panel.setOpaque(false);
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
-        panel.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
+        panel.setBorder(BorderFactory.createEmptyBorder(10, 75, 10, 75));
 
         JPanel firstPanel = new JPanel();
         firstPanel.setOpaque(false);
+        firstPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 10, 0));
 
         JPanel namePanel = new JPanel();
         namePanel.setLayout(new BoxLayout(namePanel, BoxLayout.Y_AXIS));
@@ -181,7 +282,7 @@ public class Molecule {
         nameLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
         namePanel.add(nameLabel);
 
-        JTextField nameField = new JTextField(10);
+        nameField = new JTextField(10);
         nameField.setText(molName);
         nameField.setHorizontalAlignment(SwingConstants.CENTER);
         nameField.setFont(Globals.btnFont);
@@ -196,7 +297,8 @@ public class Molecule {
                 newString.insert(offset, string);
                 if (isValid(newString.toString())) {
                     fb.insertString(offset, string, attr);
-                    molName = newString.toString();
+                    molName = newString.toString().strip();
+                    changed = true;
                 } else Toolkit.getDefaultToolkit().beep();
             }
 
@@ -206,7 +308,8 @@ public class Molecule {
                 newString.delete(offset, offset + length);
                 if (isValid(newString.toString())) {
                     fb.remove(offset, length);
-                    molName = newString.toString();
+                    molName = newString.toString().strip();
+                    changed = true;
                 } else Toolkit.getDefaultToolkit().beep();
             }
 
@@ -217,12 +320,13 @@ public class Molecule {
                 newString.replace(offset, offset + length, text);
                 if (isValid(newString.toString())) {
                     fb.replace(offset, length, text, attrs);
-                    molName = newString.toString();
+                    molName = newString.toString().strip();
+                    changed = true;
                 } else Toolkit.getDefaultToolkit().beep();
             }
 
             boolean isValid(String s) {
-                return s.matches("^(\\S+\\s?)+$");
+                return s.matches("^\\s?(\\S+\\s?)*$");
             }
         });
         namePanel.add(nameField);
@@ -250,7 +354,7 @@ public class Molecule {
         formatter.setAllowsInvalid(true);
         formatter.setMinimum(new BigDecimal("0"));
 
-        JFormattedTextField radiusField = new JFormattedTextField(formatter);
+        radiusField = new JFormattedTextField(formatter);
         radiusField.setColumns(8);
         radiusField.setValue(BigDecimal.valueOf(radius));
         radiusField.setHorizontalAlignment(SwingConstants.CENTER);
@@ -281,55 +385,99 @@ public class Molecule {
         radiusField.addPropertyChangeListener(e -> {
             BigDecimal value = (BigDecimal) radiusField.getValue();
             radius = value.doubleValue();
+            changed = true;
         });
         radPanel.add(radiusField);
         firstPanel.add(radPanel);
 
-        JPanel trashPanel = new JPanel(new BorderLayout());
-        trashPanel.setOpaque(false);
-        trashPanel.setBorder(BorderFactory.createEmptyBorder(0, 16, 10, 0));
-        trashPanel.setPreferredSize(new Dimension(48, (int) firstPanel.getPreferredSize().getHeight()));
-
-        JLabel trashIcon = new JLabel("\uf00d");
-        trashIcon.setFont(Globals.iconFont);
-        trashIcon.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        trashIcon.setForeground(Globals.textColor);
-        trashIcon.setFocusable(true);
-        trashIcon.addMouseListener(new MouseAdapter() {
-            public void mouseClicked(MouseEvent e) {
-                if (e.getButton() != MouseEvent.BUTTON1) return;
-                int msg = JOptionPane.showConfirmDialog(panel.getParent().getParent(), "Are you sure you want to delete this molecule?");
-                if (msg == JOptionPane.YES_OPTION) {
-                    // remove molecule
-                    dbGUI.removeMolecule(Molecule.this);
-                }
-            }
-        });
-        trashIcon.setToolTipText("Remove " + molName);
-        trashPanel.add(trashIcon, BorderLayout.SOUTH);
-        firstPanel.add(trashPanel);
-
         panel.add(firstPanel);
 
+        scrollablePanel = new JPanel();
+        scrollablePanel.setLayout(new BoxLayout(scrollablePanel, BoxLayout.Y_AXIS));
+        scrollablePanel.setBackground(Globals.menuBgColorLight);
+
+        sp = new JScrollPane(scrollablePanel, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
+                JScrollPane.HORIZONTAL_SCROLLBAR_NEVER) {
+
+            @Override
+            public Dimension getPreferredSize() {
+                Dimension d = super.getPreferredSize();
+                if (d.height > 300) {
+                    d = new Dimension(d.width, 300);
+                }
+                return d;
+            }
+
+            @Override
+            public Dimension getMaximumSize() {
+                Dimension max = super.getMaximumSize();
+                max.height = 300;
+                return max;
+            }
+        };
+        vScrollbar = sp.getVerticalScrollBar();
+        vScrollbar.setUnitIncrement(16);
+        sp.setBorder(null);
+        sp.setMinimumSize(new Dimension(0, 0));
+
+        atomPanels.clear();
         for (Atom a : atoms) {
             JPanel aPanel = a.getPanel();
-            panel.add(aPanel);
+            scrollablePanel.add(aPanel);
             atomPanels.add(aPanel);
         }
 
-        JPanel addPanel = new JPanel();
-        addPanel.setLayout(new BoxLayout(addPanel, BoxLayout.X_AXIS));
-        addPanel.setOpaque(false);
-        addPanel.setBorder(BorderFactory.createEmptyBorder(8, 75, 0, 55));
+        SwingUtilities.invokeLater(() -> changed = false);
+        panel.add(sp);
 
-        // Add atom
-        JButton addBtn = Globals.createButton("Add Atom", Globals.menuFont, 40, 18, 6, e -> addEmptyAtom());
+        JPanel editPanel = new JPanel();
+        editPanel.setLayout(new BoxLayout(editPanel, BoxLayout.X_AXIS));
+        editPanel.setOpaque(false);
+        editPanel.setBorder(BorderFactory.createEmptyBorder(8, 75, 0, 55));
 
-        addPanel.add(Box.createHorizontalGlue());
-        addPanel.add(addBtn);
-        addPanel.add(Box.createHorizontalGlue());
-        panel.add(addPanel);
+        // Molecule buttons
+        JButton addBtn = Globals.createButton("Add Atom (Ctrl+N)", Globals.menuFont, 40, 18, 6, e -> addEmptyAtom());
+        JButton resetBtn = Globals.createButton("Reset to Saved Molecule (Ctrl+R)", Globals.menuFont, 40, 18, 6, e -> resetMol());
+        JButton saveBtn = Globals.createButton("Save Molecule (Ctrl+S)", Globals.menuFont, 40, 18, 6, e -> {
+            saveMolecule();
+            DatabaseGUI.getInstance().saveDB(Globals.dbPath);
+        });
+
+        editPanel.add(Box.createHorizontalGlue());
+        editPanel.add(addBtn);
+        editPanel.add(resetBtn);
+        editPanel.add(saveBtn);
+        editPanel.add(Box.createHorizontalGlue());
+        panel.add(editPanel);
 
         return panel;
+    }
+
+    public void resetMol() {
+        molName = savedState.molName;
+        radius = savedState.radius;
+        atoms = savedState.atoms;
+        savedState = copy();
+
+        nameField.setText(molName);
+        radiusField.setValue(new BigDecimal(radius));
+        scrollablePanel.removeAll();
+        atomPanels.clear();
+        for (Atom a : atoms) {
+            JPanel aPanel = a.getPanel();
+            scrollablePanel.add(aPanel);
+            atomPanels.add(aPanel);
+        }
+        SwingUtilities.invokeLater(() -> changed = false);
+
+        refreshWindow();
+    }
+
+    public Molecule saved() {
+        return savedState;
+    }
+
+    public Molecule currState() {
+        return savedState == null ? parentState : this;
     }
 }
