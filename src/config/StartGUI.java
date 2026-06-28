@@ -41,6 +41,7 @@ public class StartGUI extends JFrame {
 
     private JPanel contentPane;
 
+    private JTextField seedField;
     private final Map<String, Object> settings = new HashMap<>();
     private final Map<String, JFormattedTextField> fields = new HashMap<>();
     private final Map<String, JCheckBox> checks = new HashMap<>();
@@ -124,7 +125,7 @@ public class StartGUI extends JFrame {
         seedLabel.setForeground(Globals.textColor);
         seedPanel.add(seedLabel);
 
-        JTextField seedField = new JTextField();
+        seedField = new JTextField();
         seedField.setAlignmentX(Component.CENTER_ALIGNMENT);
         seedField.setHorizontalAlignment(SwingConstants.CENTER);
         seedField.setBackground(Globals.bgColorDark);
@@ -1098,7 +1099,7 @@ public class StartGUI extends JFrame {
         saved = false;
     }
 
-    public void populateSettings(Map<String, Object> settings, Map<String, Integer> molCounts) {
+    public void populateSettings(Map<String, Object> settings, Map<String, Integer> molCounts, Long seed) {
         settings.forEach((k, v) -> this.settings.put(k, v.toString()));
 
         for (Map.Entry<String, JFormattedTextField> entry : fields.entrySet()) {
@@ -1125,6 +1126,11 @@ public class StartGUI extends JFrame {
 
         clearMolSelectors();
         molCounts.forEach(this::addMolSelector);
+
+        if (seed != null) {
+            seedField.setText(seed.toString());
+        }
+
         saved = false;
     }
 
@@ -1162,6 +1168,7 @@ public class StartGUI extends JFrame {
         if (!((boolean) settings.get("Use Input.xyz"))) checks.get("Use Input.xyz").doClick();
         fileNameInp.setText(file.getName());
         fileNameInp.setVisible(true);
+        inpDeleteIcon.setVisible(true);
         inputFile = file.getAbsolutePath();
     }
 }

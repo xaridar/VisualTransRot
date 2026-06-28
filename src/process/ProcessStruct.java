@@ -231,6 +231,21 @@ public class ProcessStruct {
         return ret;
     }
 
+    public long readSeed() throws Exception {
+        if (status == ProcessStatus.INIT_ERROR) throw new RuntimeException();
+        try (Scanner reader = new Scanner(new File(outputDir, "seed.log"))) {
+            return reader.nextLong();
+        }
+    }
+
+    public Long readSeedSafe() {
+        try {
+            return readSeed();
+        } catch (Exception ignored) {
+            return null;
+        }
+    }
+
     private long readNanos() throws Exception {
         if (status == ProcessStatus.ALIVE || status == ProcessStatus.INIT_ERROR) throw new RuntimeException();
         try (Scanner reader = new Scanner(new File(outputDir, "elapsed_time.log"))) {
