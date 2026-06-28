@@ -39,6 +39,13 @@ VTR allows the user to define a nickname for each created process if desired, wh
 
 If no nickname is specified for a process, its unique Process ID is used by default.
 
+### Seed
+![](images/seed.png)
+
+VTR also provides a method for passing a seed directly to TransRot's random number generation for reproducibility of results.
+
+If no seed is passed for a process, it will use a random seed.
+
 ### Config
 ![](images/config.png)
 
@@ -187,8 +194,8 @@ Once a process is removed from the Process Monitor, it cannot be added back.
 Each individual process in the Process Monitor displays the following details: Process ID (PID), Process Name, Started At, Elapsed Time, and Status.
 - `PID` - Each process is associated with an OS-specific process ID, which can be used to distinguish all processes running currently on a system. A currently running process exposes some details on its current status to the host OS, and often can be used to externally kill the process.
 - `Process Name` - This is either a custom nickname associated with each process in the [Process Nickname](#process-nickname) section, or defaults to using a unique name containing the process's PID. Each `Process Name` currently on the Process Monitor must be unique.
-- `Started At` - A timestamp of the start time of the process, which can also be used for distinguishing purposes.
-- `Elapsed Time` - The elapsed time of currently running processes are updated live in the Process Manager to keep track of runtime in realtime; completed processes display this information from TransRot's `elapsed_time.log` output file.
+- `Started At` - A timestamp of the start time of the process, which can also be used for distinguishing processes.
+- `Elapsed Time` - The elapsed times of currently running processes are updated live in the Process Manager to keep track of runtime in real time; completed processes display this information from TransRot's `elapsed_time.log` output file.
 <a id="status"></a>
 - `Status` - The status of a process is one of 4 options, which are grouped by default in the Process Monitor:
   - `Processing` indicates that the processes is currently executing, and the `Elapsed Time` shown can be used to view its live execution time.
@@ -234,7 +241,7 @@ The `Error Log` tab displays a live feed of the calculation's error log. This ta
 #### `Output`
 ![](images/output_files.png)
 
-The `Output` tab is shown when a process is completed. It displays a list of all files output by TransRot, which are automatically created in the process's **Output Directory**.
+The `Output` tab is shown when a process is completed. It displays an alphabetical list of all files output by TransRot, which are automatically created in the process's **Output Directory**.
 
 All displayed file names are links, and clicking on these will open the file in the host OS, using whatever program is associated with the filetype.
 All intermediate and final output `.xyz` files are accompanied by a 'Use as Input.xyz' button. Clicking this will enable the 'Use Input.xyz' variable in VTR, and populate the input automatically with the associated file.

@@ -84,6 +84,10 @@ public class StartGUI extends JFrame {
     }
 
     private void drawSettings() throws ClassCastException {
+        JPanel topPanel = new JPanel();
+        topPanel.setLayout(new BoxLayout(topPanel, BoxLayout.X_AXIS));
+        topPanel.setOpaque(false);
+
         // Nickname input
         JPanel namePanel = new JPanel();
         namePanel.setLayout(new BoxLayout(namePanel, BoxLayout.Y_AXIS));
@@ -105,7 +109,33 @@ public class StartGUI extends JFrame {
         nameField.setBorder(BorderFactory.createLineBorder(Globals.menuBgColor));
         nameField.setMaximumSize(new Dimension(250, nameField.getPreferredSize().height));
         namePanel.add(nameField);
-        contentPane.add(namePanel);
+        topPanel.add(namePanel);
+
+        topPanel.add(Box.createRigidArea(new Dimension(20, 0)));
+
+        // Seed input
+        JPanel seedPanel = new JPanel();
+        seedPanel.setLayout(new BoxLayout(seedPanel, BoxLayout.Y_AXIS));
+        seedPanel.setOpaque(false);
+
+        JLabel seedLabel = new JLabel("Seed (not required):", SwingConstants.CENTER);
+        seedLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        seedLabel.setFont(Globals.settingsFont);
+        seedLabel.setForeground(Globals.textColor);
+        seedPanel.add(seedLabel);
+
+        JTextField seedField = new JTextField();
+        seedField.setAlignmentX(Component.CENTER_ALIGNMENT);
+        seedField.setHorizontalAlignment(SwingConstants.CENTER);
+        seedField.setBackground(Globals.bgColorDark);
+        seedField.setForeground(Globals.textColor);
+        seedField.setDisabledTextColor(Globals.textColorDisabled);
+        seedField.setFont(Globals.settingsFontNoBold);
+        seedField.setBorder(BorderFactory.createLineBorder(Globals.menuBgColor));
+        seedField.setMaximumSize(new Dimension(250, seedField.getPreferredSize().height));
+        seedPanel.add(seedField);
+        topPanel.add(seedPanel);
+        contentPane.add(topPanel);
 
         contentPane.add(Box.createRigidArea(new Dimension(0, 30)));
 
@@ -564,6 +594,17 @@ public class StartGUI extends JFrame {
                 } else {
                     ptCount = selectedMols.entrySet().stream().filter(kv -> !kv.getKey().equals("") && kv.getValue() > 0).mapToInt(kv -> DatabaseGUI.getInstance().getMolecule(kv.getKey()).atoms.size() * kv.getValue()).sum();
                     numMols = selectedMols.values().stream().mapToInt(i -> i).sum();
+                }
+
+                String seedStr = seedField.getText();
+                if (seedStr.length() > 0) {
+                    try {
+                        long seed = Long.parseLong(seedStr);
+                        arguments.add("-s");
+                        arguments.add(Long.toString(seed));
+                    } catch (NumberFormatException ignored) {
+                        showError("Seed must be an valid long value if used.", "Invalid Seed");
+                    }
                 }
                 saveSettings(Globals.configPath);
 
