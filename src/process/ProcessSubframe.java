@@ -221,7 +221,11 @@ public class ProcessSubframe extends JFrame {
             outpSP.getVerticalScrollBar().setUnitIncrement(16);
             outpSP.setBorder(null);
             if (ps.getOutputDir() != null && ps.getOutputDir().exists()) {
-                for (File file : Objects.requireNonNull(ps.getOutputDir().listFiles())) {
+                File[] files = ps.getOutputDir().listFiles();
+                if (files == null || files.length == 0) return;
+
+                Arrays.sort(files);
+                for (File file : files) {
                     JPanel filePanel = new JPanel(new BorderLayout());
                     filePanel.setOpaque(false);
                     filePanel.setBorder(null);
