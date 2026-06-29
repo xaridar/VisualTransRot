@@ -392,7 +392,7 @@ public class Globals {
 
             @Override
             public void focusGained(FocusEvent e) {
-                btn.setBorder(focusedBorder);
+                if (btn.isEnabled()) btn.setBorder(focusedBorder);
             }
 
             @Override
@@ -405,7 +405,7 @@ public class Globals {
 
             @Override
             public void mouseEntered(MouseEvent e) {
-                btn.setBackground(buttonColor != null ? buttonColorDark : accentColorDark);
+                if (btn.isEnabled()) btn.setBackground(buttonColor != null ? buttonColorDark : accentColorDark);
             }
 
             @Override

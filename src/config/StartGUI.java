@@ -49,6 +49,7 @@ public class StartGUI extends JFrame {
     private final Map<JComboBox<String>, JFormattedTextField> currMolDropdowns = new HashMap<>();
     private final Map<JComboBox<String>, JButton> currMolDeleteBtns = new HashMap<>();
     private final Set<String> usedMolNames = new HashSet<>();
+    private JButton startBtn;
     String inputFile = "";
     String paramsFile = "";
 
@@ -65,6 +66,8 @@ public class StartGUI extends JFrame {
     private JLabel fileNameParams;
 
     private boolean saved;
+    private boolean waiting;
+    private long waitingPid;
 
     private StartGUI() {
         super(Globals.appName);
@@ -542,7 +545,9 @@ public class StartGUI extends JFrame {
         contentPane.add(addMolBtn);
 
         // Start Button
-        JButton startBtn = Globals.createButton("Start Simulation", Globals.btnFont, 40, 25, 8, e -> {
+        startBtn = Globals.createButton("Start Simulation", Globals.btnFont, 40, 25, 8, e -> {
+            startupProcess();
+            boolean started = false;
             String name = nameField.getText();
             if (name.length() > 0 && ProcessManager.getInstance().nameExists(name)) {
                 showError("Name is not unique.", "Name Has Been Used");
@@ -605,15 +610,18 @@ public class StartGUI extends JFrame {
                         arguments.add(Long.toString(seed));
                     } catch (NumberFormatException ignored) {
                         showError("Seed must be an valid long value if used.", "Invalid Seed");
+                        return;
                     }
                 }
                 saveSettings(Globals.configPath);
 
                 // Start sim
                 ProcessManager.getInstance().runProcess(name, arguments);
+                started = true;
             } catch (Exception exc) {
                 exc.printStackTrace();
             }
+            if (!started) setLoaded();
         });
         JPanel btnPanel = new JPanel();
         btnPanel.setOpaque(false);
@@ -1170,5 +1178,30 @@ public class StartGUI extends JFrame {
         fileNameInp.setVisible(true);
         inpDeleteIcon.setVisible(true);
         inputFile = file.getAbsolutePath();
+    }
+
+    public void setWaitingPid(long pid) {
+        waitingPid = pid;
+    }
+
+    public void setLoaded(long pid) {
+        if (pid != waitingPid) return;
+        setLoaded();
+    }
+
+    private void setLoaded() {
+        waiting = false;
+        waitingPid = 0;
+        if (startBtn != null) {
+            startBtn.setEnabled(true);
+        }
+    }
+
+    private void startupProcess() {
+        waiting = true;
+        if (startBtn != null) {
+            startBtn.setBackground(Globals.accentColor);
+            startBtn.setEnabled(false);
+        }
     }
 }

@@ -328,8 +328,10 @@ public class ProcessSubframe extends JFrame {
             Toolkit.getDefaultToolkit().getSystemClipboard().setContents(
                     new StringSelection(Long.toString(seed)), null
             );
+            JOptionPane.showMessageDialog(ProcessSubframe.this, "Seed copied!");
         });
         copyBtn.setForeground(Globals.textColor);
+        seedLabel.getParent().add(Box.createRigidArea(new Dimension(5, 0)));
         seedLabel.getParent().add(copyBtn);
     }
 
