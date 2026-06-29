@@ -330,8 +330,9 @@ public class DatabaseGUI extends JFrame {
                                     ta.requestFocusInWindow();
                                 }
                             };
-                            op.createDialog(this, "Paste Molecules to Import").setVisible(true);
-                            if (op.getValue() != null && (int) op.getValue() != JOptionPane.YES_OPTION) return;
+                            JDialog d = op.createDialog(this, "Paste Molecules to Import");
+                            d.setVisible(true);
+                            if (op.getValue() == null || (int) op.getValue() != JOptionPane.YES_OPTION) return;
                             loadFromScanner(new Scanner(ta.getText()), false);
                         }, KeyEvent.VK_T)
                 )

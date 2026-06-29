@@ -126,6 +126,10 @@ public class Globals {
     public static Font iconFontM;
     public static Font iconFontL;
     public static Font iconFontXL;
+    public static Font iconFontRegularS;
+    public static Font iconFontRegularM;
+    public static Font iconFontRegularL;
+    public static Font iconFontRegularXL;
 
     public static Color bgColor = new Color(230, 246, 255);
     public static Color bgColorDark = Color.LIGHT_GRAY;
@@ -388,7 +392,7 @@ public class Globals {
 
             @Override
             public void focusGained(FocusEvent e) {
-                btn.setBorder(focusedBorder);
+                if (btn.isEnabled()) btn.setBorder(focusedBorder);
             }
 
             @Override
@@ -401,7 +405,7 @@ public class Globals {
 
             @Override
             public void mouseEntered(MouseEvent e) {
-                btn.setBackground(buttonColor != null ? buttonColorDark : accentColorDark);
+                if (btn.isEnabled()) btn.setBackground(buttonColor != null ? buttonColorDark : accentColorDark);
             }
 
             @Override
@@ -483,7 +487,8 @@ public class Globals {
     }
 
     public enum IconSize {
-        SMALL(iconFontS), MEDIUM(iconFontM), LARGE(iconFontL), EXTRA_LARGE(iconFontXL);
+        SMALL(iconFontS), MEDIUM(iconFontM), LARGE(iconFontL), EXTRA_LARGE(iconFontXL),
+        SMALL_REGULAR(iconFontRegularS), MEDIUM_REGULAR(iconFontRegularM), LARGE_REGULAR(iconFontRegularL), EXTRA_LARGE_REGULAR(iconFontRegularXL);
 
         private Font f;
 

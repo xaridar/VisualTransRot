@@ -30,6 +30,27 @@ public class Main {
             exp.printStackTrace();
         }
 
+        try (InputStream is = Main.class.getResourceAsStream("/Font Awesome 6 Free-Regular-400.otf")) {
+            if (is == null) throw new IOException("Input stream cannot be created.");
+            Font f = Font.createFont(Font.TRUETYPE_FONT, is);
+            GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
+
+            Font fontS = f.deriveFont(Font.PLAIN, 14f);
+            Font fontM = f.deriveFont(Font.PLAIN, 20f);
+            Font fontL = f.deriveFont(Font.PLAIN, 24f);
+            Font fontXL = f.deriveFont(Font.PLAIN, 32f);
+            ge.registerFont(fontS);
+            ge.registerFont(fontM);
+            ge.registerFont(fontL);
+            ge.registerFont(fontXL);
+            Globals.iconFontRegularS = fontS;
+            Globals.iconFontRegularM = fontM;
+            Globals.iconFontRegularL = fontL;
+            Globals.iconFontRegularXL = fontXL;
+        } catch (IOException | FontFormatException exp) {
+            exp.printStackTrace();
+        }
+
         ProcessManager.getInstance().connectProcesses();
         // run main UI
         SwingUtilities.invokeLater(() -> {

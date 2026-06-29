@@ -9,9 +9,9 @@ It interfaces directly with a packaged version of TransRot, which is internally 
 ## Using VTR
 
 ### OS Support
-VTR supports execution on all three major operating systems (Windows, MacOS, Linux) and TransRot has been tested on:
+VTR supports execution on all three major operating systems (Windows, macOS, Linux) and TransRot has been tested on:
 - *Windows*: `Windows 10`, `Windows 11`
-- *MacOS*: `El Catalina`, `Monterey`, `Ventura`, `Sequoia`
+- *MacOS*: `El Catalina`, `Monterey`, `Ventura`, `Sequoia`, `Tahoe`
 - *Linux*: `Ubuntu`
 
 ### Prerequisites
@@ -39,17 +39,24 @@ VTR allows the user to define a nickname for each created process if desired, wh
 
 If no nickname is specified for a process, its unique Process ID is used by default.
 
+### Seed
+![](images/seed.png)
+
+VTR also provides a method for passing a seed directly to TransRot's random number generation for reproducibility of results.
+
+If no seed is passed for a process, it will use a random seed.
+
 ### Config
 ![](images/config.png)
 
 VTR exposes complete user control over the values of the [21 configuration variables used in TransRot](https://github.com/steventopper/TransRot/tree/main#how-to-customize-run-parameters).
 These variables include integer, decimal, and boolean inputs to allow complete control over TransRot runs.
-When a run has been started or the configuration is saved by the user, [saved_config.txt](saved_config.txt) is updated automatically to reflect any configuration changes to be used during runs of TransRot.
+When a run has been started, or the configuration is saved by the user, [saved_config.txt](saved_config.txt) is updated automatically to reflect any configuration changes to be used during runs of TransRot.
 
 Beyond allowing basic editing of configuration variables, the config interface supports several more advanced features to increase usability of TransRot:
 
 - **Numeric Validation** - All numeric inputs to VTR are automatically validated to ensure variables only accept numeric inputs.
-  - Certain numeric inputs are also accompanied byu predefined minimum and maximum acceptable values. This minimum value is 0 for all variables except `Points per Tooth` and `Max Failures During Propagation`, which both have minmum values of 1.
+  - Certain numeric inputs are also accompanied byu predefined minimum and maximum acceptable values. This minimum value is 0 for all variables except `Points per Tooth` and `Max Failures During Propagation`, which both have minimum values of 1.
     The only four variables with maximum values are `Temperature Decrease per Tooth` (1), `Magwalk Translation Probability` (1), `Magwalk Rotation Probability` (1), and `Max Rotation (Radians)` (2π).
       
 - **Conditional Variables** - A number of conditions have been defined, wherein the status (enabled/disabled) of an input is dependent on the value of a boolean input. Disabled variables are grayed out in VTR and are not used in TransRot runs. A list of these conditions is as follows; if not disabled according to one of the following rules, each variable will be enabled:
@@ -68,7 +75,7 @@ Beyond allowing basic editing of configuration variables, the config interface s
 ![](images/counts.png)
 
 When no `.xyz` file is being used, the Molecule Counts section of VTR's interface is shown. This section allows the user to select the types and counts of molecules to simulate in a run of TransRot.
-Limitations in the interface only allow moleculed defined in the [Database Editor](#database-editor) to be used, and do not allow any molecule type to be used more than once for consistency.
+Limitations in the interface only allow molecules defined in the [Database Editor](#database-editor) to be used, and do not allow any molecule type to be used more than once for consistency.
 
 ### Settings Menu
 ![](images/settings.png)
@@ -94,7 +101,7 @@ In VTR, this file reads and writes to [saved_dbase.txt](saved_dbase.txt) for dat
 
 To edit the database used for TransRot calculations, a visual editor can be opened through menu navigation (`File > Edit Database`) or using *CTRL+D*.
 
-The Database Editor interface allows a user to search for molecules, edit or remove any individual molecule, save the database to another location (*CTRL+A*), or upload either an existing dbase file (*CTRL+F*) or text descriptions of molecules (*CTRL+T*). These last three options can be found in the Database Editor's File menu, or by using the associated keybinds.
+The Database Editor interface allows a user to search for molecules, edit or remove any individual molecule, save the database to another location (*CTRL+A*), or upload either an existing dbase file (*CTRL+F*) or text descriptions of molecules (*CTRL+T*). These last three options can be found in the Database Editor's File menu, or by using the associated key binds.
 
 In its default state, [saved_dbase.txt](saved_dbase.txt) is populated with a sample database with particle definitions for `NH4+`, `CL-`, and `H2O (using TIP3P)`.
 If any of these molecule types need to be modified or removed or new molecule types are needed for a simulation, the Database Editor interface provides multiple options to do so.
@@ -115,8 +122,8 @@ If any of these molecule types need to be modified or removed or new molecule ty
 - Input can be provided through either a `.txt` file or text input, formatted according to the same rules as `saved_dbase.txt`. The input database can be used to replace the current one, or its molecules can be added to already defined ones.
   - To load a database from a formatted `.txt` file, a menu can be opened using (`File > Load molecules > from .txt File`) or using *CTRL+F* within the Database Editor.
   - To load the input by pasting formatted plaintext, a dialog can be opened using (`File > Load molecules > from Text`) or using *CTRL+T* within the Database Editor.
-- Upon choosing an upload source, the user is provided to option to `Replace` curreent molecules or `Append` to them.
-  - In the case that any newly imported molecule names are the same as any existing molecules, the `Append` option is replaced with `Append - Keep Old` and `Append - Keep New`. `Keep Old` does not aloow overwritten molecules, while `Keep New` automatically overwrites all molecules with matching names.
+- Upon choosing an upload source, the user is provided to option to `Replace` current molecules or `Append` to them.
+  - In the case that any newly imported molecule names are the same as any existing molecules, the `Append` option is replaced with `Append - Keep Old` and `Append - Keep New`. `Keep Old` does not allow overwritten molecules, while `Keep New` automatically overwrites all molecules with matching names.
 
 ### Molecule Editor
 ![](images/mol_editor.png)
@@ -187,8 +194,8 @@ Once a process is removed from the Process Monitor, it cannot be added back.
 Each individual process in the Process Monitor displays the following details: Process ID (PID), Process Name, Started At, Elapsed Time, and Status.
 - `PID` - Each process is associated with an OS-specific process ID, which can be used to distinguish all processes running currently on a system. A currently running process exposes some details on its current status to the host OS, and often can be used to externally kill the process.
 - `Process Name` - This is either a custom nickname associated with each process in the [Process Nickname](#process-nickname) section, or defaults to using a unique name containing the process's PID. Each `Process Name` currently on the Process Monitor must be unique.
-- `Started At` - A timestamp of the start time of the process, which can also be used for distinguishing purposes.
-- `Elapsed Time` - The elapsed time of currently running processes are updated live in the Process Manager to keep track of runtime in realtime; completed processes display this information from TransRot's `elapsed_time.log` output file.
+- `Started At` - A timestamp of the start time of the process, which can also be used for distinguishing processes.
+- `Elapsed Time` - The elapsed times of currently running processes are updated live in the Process Manager to keep track of runtime in real time; completed processes display this information from TransRot's `elapsed_time.log` output file.
 <a id="status"></a>
 - `Status` - The status of a process is one of 4 options, which are grouped by default in the Process Monitor:
   - `Processing` indicates that the processes is currently executing, and the `Elapsed Time` shown can be used to view its live execution time.
@@ -202,7 +209,7 @@ Additionally, each process has a link reading 'View logs & other details'. Click
 
 The Process View provides a user with more detailed information about a TransRot process than the Process Monitor.
 
-While a process is executing, 4 tabs are shown: `Process Info`, `Config`, `Output Log`, and `Error Log`. Additionally, the process's unique name is displayed and a button to end the process is exposed.
+While a process is executing, 4 tabs are shown: `Process Info`, `Config`, `Output Log`, and `Error Log`. Additionally, the process's unique name is displayed, and a button to end the process is exposed.
 When the process is terminated either automatically or manually, an `Output` tab is created, and the 'End Process' option is removed.
 
 #### `Process Info`
@@ -211,6 +218,7 @@ When the process is terminated either automatically or manually, an `Output` tab
 The `Process Info` tab includes more detailed information about a process, including:
 - **Status** - The current status of the process, as defined [earlier](#status). Status is updated in real time.
 - **Start Time** - The formatted timestamp when the process was initiated.
+- **Seed** - The long value used for seeding the random generation for this process. If defined by the user, this will match user seed input. The seed is also accompanied by a copy button, which will copy the seed to the user's clipboard.
 - **Elapsed Time** - A live timer of the process's runtime.
 - **Output Directory** - A link to the output directory of the specific process. Clicking this link opens said directory in the OS-native file viewer.
 - **Molecules Simulated** - Contains the [Molecule Counts](#molecule-counts) used for this process's TransRot calculation.
@@ -219,7 +227,7 @@ The `Process Info` tab includes more detailed information about a process, inclu
 #### `Config`
 ![](images/process_config.png)
 
-The `Config` tab lists all 20 configuration variables used in TransRot and the values used for them in the calculation.
+The `Config` tab lists all 20 configuration variables used in TransRot, as well as the values used for them in the calculation.
 
 #### `Output Log`
 ![](images/output_log.png)
@@ -234,7 +242,7 @@ The `Error Log` tab displays a live feed of the calculation's error log. This ta
 #### `Output`
 ![](images/output_files.png)
 
-The `Output` tab is shown when a process is completed. It displays a list of all files output by TransRot, which are automatically created in the process's **Output Directory**.
+The `Output` tab is shown when a process is completed. It displays an alphabetical list of all files output by TransRot, which are automatically created in the process's **Output Directory**.
 
 All displayed file names are links, and clicking on these will open the file in the host OS, using whatever program is associated with the filetype.
 All intermediate and final output `.xyz` files are accompanied by a 'Use as Input.xyz' button. Clicking this will enable the 'Use Input.xyz' variable in VTR, and populate the input automatically with the associated file.

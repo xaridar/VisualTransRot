@@ -1,5 +1,6 @@
 package process;
 
+import config.StartGUI;
 import util.Globals;
 
 import javax.swing.*;
@@ -139,6 +140,8 @@ public class ProcessManager {
                     reader.close();
                     pidFile.delete();
 
+                    StartGUI.getInstance().setWaitingPid(pid);
+
                     ProcessStruct ps = new ProcessStruct(pid, null);
                     processes.add(ps);
 
@@ -159,6 +162,8 @@ public class ProcessManager {
             long pid = new ProcessBuilder(unixArgs)
                     .redirectOutput(stdoutFile)
                     .redirectError(stderrFile).start().pid();
+
+            StartGUI.getInstance().setWaitingPid(pid);
             ProcessStruct ps = new ProcessStruct(pid, null);
             processes.add(ps);
 

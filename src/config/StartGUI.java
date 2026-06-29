@@ -41,6 +41,7 @@ public class StartGUI extends JFrame {
 
     private JPanel contentPane;
 
+    private JTextField seedField;
     private final Map<String, Object> settings = new HashMap<>();
     private final Map<String, JFormattedTextField> fields = new HashMap<>();
     private final Map<String, JCheckBox> checks = new HashMap<>();
@@ -48,6 +49,7 @@ public class StartGUI extends JFrame {
     private final Map<JComboBox<String>, JFormattedTextField> currMolDropdowns = new HashMap<>();
     private final Map<JComboBox<String>, JButton> currMolDeleteBtns = new HashMap<>();
     private final Set<String> usedMolNames = new HashSet<>();
+    private JButton startBtn;
     String inputFile = "";
     String paramsFile = "";
 
@@ -64,6 +66,8 @@ public class StartGUI extends JFrame {
     private JLabel fileNameParams;
 
     private boolean saved;
+    private boolean waiting;
+    private long waitingPid;
 
     private StartGUI() {
         super(Globals.appName);
@@ -84,6 +88,10 @@ public class StartGUI extends JFrame {
     }
 
     private void drawSettings() throws ClassCastException {
+        JPanel topPanel = new JPanel();
+        topPanel.setLayout(new BoxLayout(topPanel, BoxLayout.X_AXIS));
+        topPanel.setOpaque(false);
+
         // Nickname input
         JPanel namePanel = new JPanel();
         namePanel.setLayout(new BoxLayout(namePanel, BoxLayout.Y_AXIS));
@@ -105,7 +113,33 @@ public class StartGUI extends JFrame {
         nameField.setBorder(BorderFactory.createLineBorder(Globals.menuBgColor));
         nameField.setMaximumSize(new Dimension(250, nameField.getPreferredSize().height));
         namePanel.add(nameField);
-        contentPane.add(namePanel);
+        topPanel.add(namePanel);
+
+        topPanel.add(Box.createRigidArea(new Dimension(20, 0)));
+
+        // Seed input
+        JPanel seedPanel = new JPanel();
+        seedPanel.setLayout(new BoxLayout(seedPanel, BoxLayout.Y_AXIS));
+        seedPanel.setOpaque(false);
+
+        JLabel seedLabel = new JLabel("Seed (not required):", SwingConstants.CENTER);
+        seedLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        seedLabel.setFont(Globals.settingsFont);
+        seedLabel.setForeground(Globals.textColor);
+        seedPanel.add(seedLabel);
+
+        seedField = new JTextField();
+        seedField.setAlignmentX(Component.CENTER_ALIGNMENT);
+        seedField.setHorizontalAlignment(SwingConstants.CENTER);
+        seedField.setBackground(Globals.bgColorDark);
+        seedField.setForeground(Globals.textColor);
+        seedField.setDisabledTextColor(Globals.textColorDisabled);
+        seedField.setFont(Globals.settingsFontNoBold);
+        seedField.setBorder(BorderFactory.createLineBorder(Globals.menuBgColor));
+        seedField.setMaximumSize(new Dimension(250, seedField.getPreferredSize().height));
+        seedPanel.add(seedField);
+        topPanel.add(seedPanel);
+        contentPane.add(topPanel);
 
         contentPane.add(Box.createRigidArea(new Dimension(0, 30)));
 
@@ -511,7 +545,9 @@ public class StartGUI extends JFrame {
         contentPane.add(addMolBtn);
 
         // Start Button
-        JButton startBtn = Globals.createButton("Start Simulation", Globals.btnFont, 40, 25, 8, e -> {
+        startBtn = Globals.createButton("Start Simulation", Globals.btnFont, 40, 25, 8, e -> {
+            startupProcess();
+            boolean started = false;
             String name = nameField.getText();
             if (name.length() > 0 && ProcessManager.getInstance().nameExists(name)) {
                 showError("Name is not unique.", "Name Has Been Used");
@@ -565,13 +601,27 @@ public class StartGUI extends JFrame {
                     ptCount = selectedMols.entrySet().stream().filter(kv -> !kv.getKey().equals("") && kv.getValue() > 0).mapToInt(kv -> DatabaseGUI.getInstance().getMolecule(kv.getKey()).atoms.size() * kv.getValue()).sum();
                     numMols = selectedMols.values().stream().mapToInt(i -> i).sum();
                 }
+
+                String seedStr = seedField.getText();
+                if (seedStr.length() > 0) {
+                    try {
+                        long seed = Long.parseLong(seedStr);
+                        arguments.add("-s");
+                        arguments.add(Long.toString(seed));
+                    } catch (NumberFormatException ignored) {
+                        showError("Seed must be an valid long value if used.", "Invalid Seed");
+                        return;
+                    }
+                }
                 saveSettings(Globals.configPath);
 
                 // Start sim
                 ProcessManager.getInstance().runProcess(name, arguments);
+                started = true;
             } catch (Exception exc) {
                 exc.printStackTrace();
             }
+            if (!started) setLoaded();
         });
         JPanel btnPanel = new JPanel();
         btnPanel.setOpaque(false);
@@ -1057,7 +1107,7 @@ public class StartGUI extends JFrame {
         saved = false;
     }
 
-    public void populateSettings(Map<String, Object> settings, Map<String, Integer> molCounts) {
+    public void populateSettings(Map<String, Object> settings, Map<String, Integer> molCounts, Long seed) {
         settings.forEach((k, v) -> this.settings.put(k, v.toString()));
 
         for (Map.Entry<String, JFormattedTextField> entry : fields.entrySet()) {
@@ -1084,6 +1134,11 @@ public class StartGUI extends JFrame {
 
         clearMolSelectors();
         molCounts.forEach(this::addMolSelector);
+
+        if (seed != null) {
+            seedField.setText(seed.toString());
+        }
+
         saved = false;
     }
 
@@ -1121,6 +1176,32 @@ public class StartGUI extends JFrame {
         if (!((boolean) settings.get("Use Input.xyz"))) checks.get("Use Input.xyz").doClick();
         fileNameInp.setText(file.getName());
         fileNameInp.setVisible(true);
+        inpDeleteIcon.setVisible(true);
         inputFile = file.getAbsolutePath();
+    }
+
+    public void setWaitingPid(long pid) {
+        waitingPid = pid;
+    }
+
+    public void setLoaded(long pid) {
+        if (pid != waitingPid) return;
+        setLoaded();
+    }
+
+    private void setLoaded() {
+        waiting = false;
+        waitingPid = 0;
+        if (startBtn != null) {
+            startBtn.setEnabled(true);
+        }
+    }
+
+    private void startupProcess() {
+        waiting = true;
+        if (startBtn != null) {
+            startBtn.setBackground(Globals.accentColor);
+            startBtn.setEnabled(false);
+        }
     }
 }
