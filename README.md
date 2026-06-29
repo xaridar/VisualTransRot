@@ -11,7 +11,7 @@ It interfaces directly with a packaged version of TransRot, which is internally 
 ### OS Support
 VTR supports execution on all three major operating systems (Windows, macOS, Linux) and TransRot has been tested on:
 - *Windows*: `Windows 10`, `Windows 11`
-- *MacOS*: `El Catalina`, `Monterey`, `Ventura`, `Sequoia`
+- *MacOS*: `El Catalina`, `Monterey`, `Ventura`, `Sequoia`, `Tahoe`
 - *Linux*: `Ubuntu`
 
 ### Prerequisites
@@ -218,6 +218,7 @@ When the process is terminated either automatically or manually, an `Output` tab
 The `Process Info` tab includes more detailed information about a process, including:
 - **Status** - The current status of the process, as defined [earlier](#status). Status is updated in real time.
 - **Start Time** - The formatted timestamp when the process was initiated.
+- **Seed** - The long value used for seeding the random generation for this process. If defined by the user, this will match user seed input. The seed is also accompanied by a copy button, which will copy the seed to the user's clipboard.
 - **Elapsed Time** - A live timer of the process's runtime.
 - **Output Directory** - A link to the output directory of the specific process. Clicking this link opens said directory in the OS-native file viewer.
 - **Molecules Simulated** - Contains the [Molecule Counts](#molecule-counts) used for this process's TransRot calculation.
