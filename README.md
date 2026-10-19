@@ -31,6 +31,9 @@ To build VTR from source, first download the source code from [here](../../relea
 
 If manually compiled, `saved_config.txt`, `saved_dbase.txt`, `TransRot.jar`, and `wrapper.jar` must be placed to be siblings of the compiled output directory.
 
+Alternatively, OS-dependent .zip files can be automatically generated using `build_output.sh`. These will be placed in `/bin`.
+For Windows systems, this requires either the use of WSL or the installation of Git Bash.
+
 ## Features & Capabilities
 ### Process Nickname
 ![](images/nick.png)

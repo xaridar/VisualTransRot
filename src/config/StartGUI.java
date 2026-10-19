@@ -928,7 +928,7 @@ public class StartGUI extends JFrame {
                     JFileChooser outputChooser = new JFileChooser(outputPath);
                     outputChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
                     outputChooser.setDialogTitle("Choose an output directory for runs of TransRot");
-                    int out = outputChooser.showSaveDialog(StartGUI.this);
+                    int out = outputChooser.showOpenDialog(StartGUI.this);
                     if (out == JFileChooser.APPROVE_OPTION) {
                         Globals.pref.put("OUTPUT_PATH", outputChooser.getSelectedFile().getAbsolutePath());
                         outputChooser.setCurrentDirectory(outputChooser.getSelectedFile());
