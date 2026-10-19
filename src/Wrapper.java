@@ -3,8 +3,6 @@
 // (powered by FernFlower decompiler)
 //
 
-import util.Globals;
-
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -25,7 +23,7 @@ public class Wrapper {
         ProcessBuilder pb = (new ProcessBuilder(procArgs.subList(0, procArgs.size()))).inheritIO();
         Process p = pb.start();
         long pid = p.pid();
-        URL url = Globals.class.getProtectionDomain().getCodeSource().getLocation();
+        URL url = Wrapper.class.getProtectionDomain().getCodeSource().getLocation();
         File parentDir = new File(new File(URLDecoder.decode(url.getFile(), StandardCharsets.UTF_8.name())).getParent(), "pids");
         if (!parentDir.exists()) {
             parentDir.mkdir();

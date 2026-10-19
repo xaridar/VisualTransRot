@@ -5,6 +5,7 @@ import util.Globals;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.datatransfer.StringSelection;
 import java.awt.event.*;
 import java.io.File;
 import java.io.IOException;
@@ -39,6 +40,7 @@ public class ProcessSubframe extends JFrame {
     private final JPanel infoPanel;
     private final JTabbedPane tabbedPane;
     private final JLabel statusLabel;
+    private final JLabel seedLabel;
     private final JLabel etLabel;
     private final JButton dirBtn;
     private final JPanel endPanel;
@@ -113,6 +115,24 @@ public class ProcessSubframe extends JFrame {
         startPanel.add(startLabel);
         infoPanel.add(startPanel);
 
+        JPanel seedPanel = new JPanel();
+        seedPanel.setOpaque(false);
+        seedPanel.setLayout(new BoxLayout(seedPanel, BoxLayout.X_AXIS));
+        seedPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        JLabel seedTitleLabel = new JLabel("Seed:  ");
+        seedTitleLabel.setForeground(Globals.textColor);
+        seedTitleLabel.setFont(Globals.settingsFont);
+        seedPanel.add(seedTitleLabel);
+        seedLabel = new JLabel();
+        seedLabel.setForeground(Globals.textColor);
+        seedLabel.setFont(Globals.settingsFontNoBold);
+        seedPanel.add(seedLabel);
+        try {
+            addSeed();
+        } catch (Exception ignored) {}
+        infoPanel.add(seedPanel);
+
         JPanel etPanel = new JPanel();
         etPanel.setOpaque(false);
         etPanel.setLayout(new BoxLayout(etPanel, BoxLayout.X_AXIS));
@@ -172,7 +192,7 @@ public class ProcessSubframe extends JFrame {
             restartPanel.setLayout(new BoxLayout(restartPanel, BoxLayout.Y_AXIS));
             restartPanel.setOpaque(false);
             JButton restartLink = Globals.createLinkButton("Load config with values", Globals.settingsFontNoBold, 3, 2, true, e -> {
-                StartGUI.getInstance().populateSettings(ps.getConfigMap(), ps.getMolCounts());
+                StartGUI.getInstance().populateSettings(ps.getConfigMap(), ps.getMolCounts(), ps.readSeedSafe());
             });
             restartLink.setAlignmentX(Component.LEFT_ALIGNMENT);
             restartPanel.add(restartLink);
@@ -221,7 +241,11 @@ public class ProcessSubframe extends JFrame {
             outpSP.getVerticalScrollBar().setUnitIncrement(16);
             outpSP.setBorder(null);
             if (ps.getOutputDir() != null && ps.getOutputDir().exists()) {
-                for (File file : Objects.requireNonNull(ps.getOutputDir().listFiles())) {
+                File[] files = ps.getOutputDir().listFiles();
+                if (files == null || files.length == 0) return;
+
+                Arrays.sort(files);
+                for (File file : files) {
                     JPanel filePanel = new JPanel(new BorderLayout());
                     filePanel.setOpaque(false);
                     filePanel.setBorder(null);
@@ -297,6 +321,20 @@ public class ProcessSubframe extends JFrame {
                 JComponent.WHEN_IN_FOCUSED_WINDOW);
     }
 
+    private void addSeed() throws Exception {
+        long seed = ps.readSeed();
+        seedLabel.setText(Long.toString(seed));
+        JButton copyBtn = Globals.createIconButton("\uf0c5", true, Globals.textColor, Globals.IconSize.SMALL_REGULAR, "Copy seed", e -> {
+            Toolkit.getDefaultToolkit().getSystemClipboard().setContents(
+                    new StringSelection(Long.toString(seed)), null
+            );
+            JOptionPane.showMessageDialog(ProcessSubframe.this, "Seed copied!");
+        });
+        copyBtn.setForeground(Globals.textColor);
+        seedLabel.getParent().add(Box.createRigidArea(new Dimension(5, 0)));
+        seedLabel.getParent().add(copyBtn);
+    }
+
     private JPanel addPanel(List<String> lines, String tabHeader) {
         JPanel panel = new JPanel();
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
@@ -327,6 +365,12 @@ public class ProcessSubframe extends JFrame {
     private void updateWindow() {
         statusLabel.setText(ps.getStatus().toString());
         etLabel.setText(ps.getExecTime());
+
+        if (seedLabel.getText().equals("")) {
+            try {
+                addSeed();
+            } catch (Exception ignored) {}
+        }
 
         if (ps.getOutputDir() != null && !dirShown && ps.getOutputDir().exists()) {
             dirShown = true;

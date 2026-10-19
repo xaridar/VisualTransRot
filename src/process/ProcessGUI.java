@@ -1,5 +1,6 @@
 package process;
 
+import config.StartGUI;
 import util.Globals;
 
 import javax.sound.sampled.Port;
@@ -212,6 +213,7 @@ public class ProcessGUI extends JFrame {
             ProcessStruct ps = processes.get(i);
             if (!lastPSs.stream().map(ProcessStruct::getPid).collect(Collectors.toList()).contains(ps.getPid())) {
                 // new PID
+                StartGUI.getInstance().setLoaded(ps.getPid());
                 tModel.addRow(new Object[]{ps.getPid(), ps.getName(), ps.getStartStr(), ps.getExecTime(), ps.getStatus(), "<html><u>View logs & other details</u></html>"});
                 outerI--;
             } else {
